@@ -15,16 +15,17 @@
  */
 package fetch.oef.sdk.kotlin
 
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import fetch.oef.pb.QueryOuterClass
+
+typealias QueryPb = QueryOuterClass.Query
+typealias ModelPb = QueryOuterClass.Query.Model
 
 
-fun <T: Any>unWrapCompanionClass(ofClass: Class<T>): Class<*>{
-    return ofClass.enclosingClass?.takeIf {
-        ofClass.kotlin.isCompanion
-    } ?: ofClass
-}
+class Query : ProtobufSerializable<ModelPb> {
 
-fun <R: Any> R.logger(): Lazy<Logger>{
-    return lazy { LogManager.getLogger(unWrapCompanionClass(this.javaClass).name) }
+    override fun fromProto(obj: ModelPb) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun toProto(): ModelPb = ModelPb.newBuilder().build()
 }

@@ -18,12 +18,84 @@ package fetch.oef.sdk.kotlin
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import assertk.assert
+import assertk.assertions.isNotNull
+import assertk.assertions.isTrue
+import fetch.oef.pb.AgentOuterClass
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TestOEFProxy {
 
+    companion object {
+        val log by logger()
+    }
+
     @Test
     fun connect() {
-        println("HelloWorld")
+        val proxy = OEFNetworkProxy("12345", "127.0.0.1")
+        assert(proxy.connect()).isTrue()
+        proxy.stop()
+    }
+
+    class LogAgent(proxy: OEFProxy, private val foundAgents: MutableList<String>?=null) : Agent(proxy) {
+        override fun onError(
+            operation: AgentOuterClass.Server.AgentMessage.Error.Operation,
+            dialogueId: Int,
+            messageId: Int
+        ) {
+            log.error("Error: dialogueId=$dialogueId, messageId=$messageId, operation=${operation.name}")
+        }
+
+        override fun onSearchResult(searchId: Int, agents: List<String>) {
+            log.info("Got search result: searchId: $searchId, agents: ${agents.size}")
+            foundAgents?.addAll(0, agents)
+        }
+
+        override fun onMessage(dialogueId: Int, origin: String, conent: ByteArray) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
+        override fun onCFP(dialogueId: Int, origin: String, messageId: Int, target: Int, query: CFPQuery) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
+        override fun onPropose(dialogueId: Int, origin: String, messageId: Int, target: Int, proposals: Proposals) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
+        override fun onAccept(dialogueId: Int, origin: String, messageId: Int, target: Int) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
+        override fun onDecline(dialogueId: Int, origin: String, messageId: Int, target: Int) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+    }
+
+    @Test
+    fun `Register agent with OEF node`(){
+        val proxy = OEFNetworkProxy("123456", "127.0.0.1")
+        val agent = LogAgent(proxy)
+        assert(agent.connect()).isTrue()
+
+        agent.registerAgent(Description())
+
+        val proxy2 = OEFNetworkProxy("1234567", "127.0.0.1")
+        val foundAgents = mutableListOf<String>()
+        val agent2 = LogAgent(proxy2,foundAgents)
+        assert(agent2.connect()).isTrue()
+        agent.registerAgent(Description())
+        agent2.searchAgents(1, Query())
+
+        Thread.sleep(1000)
+
+        assert(foundAgents.find {
+            it=="123456"
+        }).isNotNull()
+
+        agent.unregisterAgent()
+
+        Thread.sleep(1000)
+        agent.close()
+        agent2.close()
     }
 }

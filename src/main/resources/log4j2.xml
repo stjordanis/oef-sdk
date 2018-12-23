@@ -8,11 +8,9 @@
     <Loggers>
         <Root level="warn">
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="File" />
         </Root>
         <logger name="fetch.oef.sdk.kotlin" level="trace" additivity="false">
             <AppenderRef ref="Console" />
-            <AppenderRef ref="File" />
         </logger>
     </Loggers>
 </Configuration>

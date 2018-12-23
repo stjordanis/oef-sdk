@@ -3,6 +3,7 @@ plugins {
     id "com.google.protobuf" version "0.8.7"
     id "java"
     id 'idea'
+    id 'java-library'
 }
 
 group 'fetch.oef.sdk.kotlin'
@@ -20,6 +21,8 @@ project.ext {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1"
+
 
     implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.6.1'
 

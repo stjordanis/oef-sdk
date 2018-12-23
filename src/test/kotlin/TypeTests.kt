@@ -22,23 +22,23 @@ import assertk.assertAll
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import fetch.oef.pb.QueryOuterClass.Query
-import fetch.oef.sdk.kotlin.types.Description
-import fetch.oef.sdk.kotlin.types.DescriptionPair
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TestSchema {
+class TypeTestSchema {
 
     @Test
     fun `Description object creation`() {
-      val It = Description(listOf(
-                DescriptionPair.STRING("title", "It"),
-                DescriptionPair.STRING("author", "Stephen King"),
-                DescriptionPair.STRING("genre",  "horror"),
-                DescriptionPair.INT   ("year", 1986),
-                DescriptionPair.DOUBLE("average_rating", 4.5),
-                DescriptionPair.STRING("ISBN", "0-670-81302-8"),
-                DescriptionPair.BOOL  ("ebook_available", true)
-      ))
+      val It = Description(
+          listOf(
+              DescriptionPair.STRING("title", "It"),
+              DescriptionPair.STRING("author", "Stephen King"),
+              DescriptionPair.STRING("genre", "horror"),
+              DescriptionPair.INT("year", 1986),
+              DescriptionPair.DOUBLE("average_rating", 4.5),
+              DescriptionPair.STRING("ISBN", "0-670-81302-8"),
+              DescriptionPair.BOOL("ebook_available", true)
+          )
+      )
         val proto = It.toProto()
         assertAll {
             assert(proto.getValues(0)).isNotNull{
@@ -70,15 +70,17 @@ class TestSchema {
 
     @Test
     fun `Description object proto transformation`() {
-        val It = Description(listOf(
-            DescriptionPair.STRING("title", "It"),
-            DescriptionPair.STRING("author", "Stephen King"),
-            DescriptionPair.STRING("genre",  "horror"),
-            DescriptionPair.INT   ("year", 1986),
-            DescriptionPair.DOUBLE("average_rating", 4.5),
-            DescriptionPair.STRING("ISBN", "0-670-81302-8"),
-            DescriptionPair.BOOL  ("ebook_available", true)
-        ))
+        val It = Description(
+            listOf(
+                DescriptionPair.STRING("title", "It"),
+                DescriptionPair.STRING("author", "Stephen King"),
+                DescriptionPair.STRING("genre", "horror"),
+                DescriptionPair.INT("year", 1986),
+                DescriptionPair.DOUBLE("average_rating", 4.5),
+                DescriptionPair.STRING("ISBN", "0-670-81302-8"),
+                DescriptionPair.BOOL("ebook_available", true)
+            )
+        )
         val proto = It.toProto()
         val It2 = Description().apply {
             fromProto(proto)
@@ -87,5 +89,13 @@ class TestSchema {
         assertAll {
             assert(It2).isEqualTo(It)
         }
+    }
+}
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class TypeTestQuery {
+
+    @Test
+    fun `Create query object`() {
     }
 }

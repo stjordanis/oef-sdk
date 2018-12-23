@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package fetch.oef.sdk.kotlin.types
+package fetch.oef.sdk.kotlin
 
+import fetch.oef.pb.AgentOuterClass
 import fetch.oef.pb.QueryOuterClass.Query
 import java.lang.Exception
 
@@ -23,14 +24,6 @@ import java.lang.Exception
  * Type aliases
  */
 typealias AttributeType = Query.Attribute.Type
-
-/**
- * ProtobufSerializable interface
- */
-internal interface ProtobufSerializable <T> {
-    fun toProto() : T
-    fun fromProto(obj: T)
-}
 
 
 /**
@@ -49,11 +42,11 @@ internal interface ProtobufSerializable <T> {
  * </pre>
  */
 class AttributeSchema(
-   name: String,
-   type: AttributeType,
-   required: Boolean,
-   description: String? = null
-) : ProtobufSerializable<Query.Attribute>{
+    name: String,
+    type: AttributeType,
+    required: Boolean,
+    description: String? = null
+) : ProtobufSerializable<Query.Attribute> {
 
     var name: String = name
         private set
@@ -174,13 +167,13 @@ sealed class DescriptionPair (val name: String)  {
     protected val keyValueBuilder: Query.KeyValue.Builder = Query.KeyValue.newBuilder().setKey(name)
 
     internal fun getAttributeType(): AttributeType = when(this){
-        is INT    -> AttributeType.INT
+        is INT -> AttributeType.INT
         is DOUBLE -> AttributeType.DOUBLE
-        is BOOL   -> AttributeType.BOOL
+        is BOOL -> AttributeType.BOOL
         is STRING -> AttributeType.STRING
     }
 
-    internal fun toAttributeSchema() = AttributeSchema(name, getAttributeType(),    true)
+    internal fun toAttributeSchema() = AttributeSchema(name, getAttributeType(), true)
     abstract fun toProto(): Query.KeyValue
 
     class INT   (name: String, val value: Long)    : DescriptionPair(name) {
@@ -222,7 +215,7 @@ sealed class DescriptionPair (val name: String)  {
         if (other.name != name) return false
         if (other.getAttributeType() != getAttributeType()) return false
         when(this){
-            is INT    -> {
+            is INT -> {
                 other as INT
                 if (value != other.value) return false
             }
@@ -230,7 +223,7 @@ sealed class DescriptionPair (val name: String)  {
                 other as DOUBLE
                 if (value != other.value) return false
             }
-            is BOOL   -> {
+            is BOOL -> {
                 other as BOOL
                 if (value != other.value) return false
             }
@@ -330,6 +323,10 @@ class Description(
                 it.addValues(attribute.toProto())
             }
         }
+        .build()
+
+    fun toAgentDescription() = AgentOuterClass.AgentDescription.newBuilder()
+        .setDescription(toProto())
         .build()
 
     override fun equals(other: Any?): Boolean {

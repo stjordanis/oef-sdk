@@ -15,16 +15,16 @@
  */
 package fetch.oef.sdk.kotlin
 
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+abstract class Agent (
+    private val proxy: OEFProxy
+) : OEFProxyInterface by proxy, AgentCommunicationHandlerInterface, OEFConnectionInterface {
 
+    override fun connect(): Boolean {
+        proxy.setAgent(this)
+        return proxy.connect()
+    }
 
-fun <T: Any>unWrapCompanionClass(ofClass: Class<T>): Class<*>{
-    return ofClass.enclosingClass?.takeIf {
-        ofClass.kotlin.isCompanion
-    } ?: ofClass
-}
-
-fun <R: Any> R.logger(): Lazy<Logger>{
-    return lazy { LogManager.getLogger(unWrapCompanionClass(this.javaClass).name) }
+    override fun stop() {
+        proxy.stop()
+    }
 }
