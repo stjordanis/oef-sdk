@@ -30,13 +30,13 @@ class TypeTestSchema {
     fun `Description object creation`() {
       val It = Description(
           listOf(
-              DescriptionPair.STRING("title", "It"),
-              DescriptionPair.STRING("author", "Stephen King"),
-              DescriptionPair.STRING("genre", "horror"),
-              DescriptionPair.INT("year", 1986),
-              DescriptionPair.DOUBLE("average_rating", 4.5),
-              DescriptionPair.STRING("ISBN", "0-670-81302-8"),
-              DescriptionPair.BOOL("ebook_available", true)
+              descriptionPair("title", "It"),
+              descriptionPair("author", "Stephen King"),
+              descriptionPair("genre", "horror"),
+              descriptionPair("year", 1986),
+              descriptionPair("average_rating", 4.5),
+              descriptionPair("ISBN", "0-670-81302-8"),
+              descriptionPair("ebook_available", true)
           )
       )
         val proto = It.toProto()
@@ -72,13 +72,13 @@ class TypeTestSchema {
     fun `Description object proto transformation`() {
         val It = Description(
             listOf(
-                DescriptionPair.STRING("title", "It"),
-                DescriptionPair.STRING("author", "Stephen King"),
-                DescriptionPair.STRING("genre", "horror"),
-                DescriptionPair.INT("year", 1986),
-                DescriptionPair.DOUBLE("average_rating", 4.5),
-                DescriptionPair.STRING("ISBN", "0-670-81302-8"),
-                DescriptionPair.BOOL("ebook_available", true)
+                descriptionPair("title", "It"),
+                descriptionPair("author", "Stephen King"),
+                descriptionPair("genre", "horror"),
+                descriptionPair("year", 1986),
+                descriptionPair("average_rating", 4.5),
+                descriptionPair("ISBN", "0-670-81302-8"),
+                descriptionPair("ebook_available", true)
             )
         )
         val proto = It.toProto()

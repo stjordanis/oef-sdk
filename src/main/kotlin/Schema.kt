@@ -16,14 +16,14 @@
 package fetch.oef.sdk.kotlin
 
 import fetch.oef.pb.AgentOuterClass
-import fetch.oef.pb.QueryOuterClass.Query
+import fetch.oef.pb.QueryOuterClass.Query as QueryPb
 import java.lang.Exception
 
 
 /**
  * Type aliases
  */
-typealias AttributeType = Query.Attribute.Type
+typealias AttributeType = QueryPb.Attribute.Type
 
 
 /**
@@ -46,7 +46,7 @@ class AttributeSchema(
     type: AttributeType,
     required: Boolean,
     description: String? = null
-) : ProtobufSerializable<Query.Attribute> {
+) : ProtobufSerializable<QueryPb.Attribute> {
 
     var name: String = name
         private set
@@ -59,7 +59,7 @@ class AttributeSchema(
 
     constructor() : this("", AttributeType.INT, true)
 
-    override fun fromProto(obj: Query.Attribute) {
+    override fun fromProto(obj: QueryPb.Attribute) {
         name        = obj.name
         type        = obj.type
         required    = obj.required
@@ -69,7 +69,7 @@ class AttributeSchema(
         }
     }
 
-    override fun toProto(): Query.Attribute =  Query.Attribute.newBuilder()
+    override fun toProto(): QueryPb.Attribute =  QueryPb.Attribute.newBuilder()
         .setName(name)
         .setType(type)
         .setRequired(required)
@@ -114,14 +114,14 @@ class DataModel(
     private var name: String,
     attributes: List<AttributeSchema>,
     private var description: String? = null
-) : ProtobufSerializable<Query.DataModel> {
+) : ProtobufSerializable<QueryPb.DataModel> {
 
     var attributes: List<AttributeSchema> = attributes
         private set
 
     constructor() : this("", listOf())
 
-    override fun fromProto(obj: Query.DataModel) {
+    override fun fromProto(obj: QueryPb.DataModel) {
         name       = obj.name
         attributes = obj.attributesList.map {
             AttributeSchema().apply {
@@ -134,7 +134,7 @@ class DataModel(
         }
     }
 
-    override fun toProto(): Query.DataModel = Query.DataModel.newBuilder()
+    override fun toProto(): QueryPb.DataModel = QueryPb.DataModel.newBuilder()
         .setName(name)
         .also{ builder->
             attributes.forEach {
@@ -161,58 +161,60 @@ class DataModel(
     }
 }
 
+class UnknownTypeException(message: String) : Exception(message)
 
-sealed class DescriptionPair (val name: String)  {
-
-    protected val keyValueBuilder: Query.KeyValue.Builder = Query.KeyValue.newBuilder().setKey(name)
-
-    internal fun getAttributeType(): AttributeType = when(this){
-        is INT -> AttributeType.INT
-        is DOUBLE -> AttributeType.DOUBLE
-        is BOOL -> AttributeType.BOOL
-        is STRING -> AttributeType.STRING
-    }
-
-    internal fun toAttributeSchema() = AttributeSchema(name, getAttributeType(), true)
-    abstract fun toProto(): Query.KeyValue
-
-    class INT   (name: String, val value: Long)    : DescriptionPair(name) {
-        override fun toProto(): Query.KeyValue = keyValueBuilder
-            .setValue(Query.Value.newBuilder().setI(value).build())
-            .build()
-    }
-    class DOUBLE(name: String, val value: Double) : DescriptionPair(name) {
-        override fun toProto(): Query.KeyValue = keyValueBuilder
-            .setValue(Query.Value.newBuilder().setD(value))
-            .build()
-    }
-    class BOOL  (name: String, val value: Boolean)   : DescriptionPair(name) {
-        override fun toProto(): Query.KeyValue = keyValueBuilder
-            .setValue(Query.Value.newBuilder().setB(value))
-            .build()
-    }
-    class STRING(name: String, val value: String) : DescriptionPair(name) {
-        override fun toProto(): Query.KeyValue = keyValueBuilder
-            .setValue(Query.Value.newBuilder().setS(value))
-            .build()
-    }
+sealed class Value {
+    data class INT   (val value: Long)    : Value()
+    data class DOUBLE(val value: Double)  : Value()
+    data class BOOL  (val value: Boolean) : Value()
+    data class STRING(val value: String)  : Value()
 
     companion object {
-        fun fromProto(obj: Query.KeyValue): DescriptionPair = when {
-                obj.value.hasI() -> INT(obj.key, obj.value.i)
-                obj.value.hasB() -> BOOL(obj.key, obj.value.b)
-                obj.value.hasD() -> DOUBLE(obj.key, obj.value.d)
-                obj.value.hasS() -> STRING(obj.key, obj.value.s)
-                else -> {
-                    throw Exception("Unexpected DescriptionPair type!")
-                }
+        fun fromProto(obj: QueryPb.Value) = when{
+            obj.hasI() -> INT(obj.i)
+            obj.hasD() -> DOUBLE(obj.d)
+            obj.hasB() -> BOOL(obj.b)
+            obj.hasS() -> STRING(obj.s)
+            else -> {
+                throw UnknownTypeException("Unexpected Value type!")
             }
+        }
+        internal fun <T> fromKotlinType(value: T) = when(value) {
+            is Long          -> INT(value)
+            is Int           -> INT(value.toLong())
+            is Double        -> DOUBLE(value)
+            is Float         -> DOUBLE(value.toDouble())
+            is Boolean       -> BOOL(value)
+            is String        -> STRING(value)
+            is Value         -> value
+            is QueryPb.Value -> fromProto(value)
+            else -> {
+                throw Exception("Unsupported value type! Only long, int, double, bool and string is supported!")
+            }
+        }
+    }
+
+    fun toProto(): QueryPb.Value = QueryPb.Value.newBuilder()
+        .also {
+            when(this){
+                is INT    -> it.i = value
+                is DOUBLE -> it.d = value
+                is BOOL   -> it.b = value
+                is STRING -> it.s = value
+            }
+        }
+        .build()
+
+    internal fun getAttributeType(): AttributeType = when(this){
+        is Value.INT    -> AttributeType.INT
+        is Value.DOUBLE -> AttributeType.DOUBLE
+        is Value.BOOL   -> AttributeType.BOOL
+        is Value.STRING -> AttributeType.STRING
     }
 
     override fun equals(other: Any?): Boolean {
         if (other?.javaClass != javaClass) return false
-        other as DescriptionPair
-        if (other.name != name) return false
+        other as Value
         if (other.getAttributeType() != getAttributeType()) return false
         when(this){
             is INT -> {
@@ -236,10 +238,32 @@ sealed class DescriptionPair (val name: String)  {
     }
 }
 
+class KeyValue (val name: String, val value: Value)  {
+
+    companion object {
+        fun fromProto(obj: QueryPb.KeyValue) = KeyValue(obj.key, Value.fromProto(obj.value))
+    }
+
+    fun toProto(): QueryPb.KeyValue = QueryPb.KeyValue.newBuilder()
+        .setKey(name)
+        .setValue(value.toProto())
+        .build()
+
+    override fun equals(other: Any?): Boolean {
+        if (other?.javaClass != javaClass) return false
+        other as KeyValue
+        if (other.name!=name) return false
+        return other.value == value
+    }
+}
+
 
 class AttributeInconsistencyException(
     message: String
 ) : Exception(message)
+
+
+fun <T> descriptionPair(name: String, value: T): KeyValue = KeyValue(name,Value.fromKotlinType(value))
 
 
 /**
@@ -253,22 +277,22 @@ class AttributeInconsistencyException(
  * <pre>
  * {@code
  *     val It = Description(listOf(
- *                  DescriptionPair.STRING("title", "It"),
- *                  DescriptionPair.STRING("author", "Stephen King"),
- *                  DescriptionPair.STRING("genre",  "horror"),
- *                  DescriptionPair.INT   ("year", 1986),
- *                  DescriptionPair.DOUBLE("average_rating", 4.5),
- *                  DescriptionPair.STRING("ISBN", "0-670-81302-8"),
- *                  DescriptionPair.BOOL  ("ebook_available", true)
+ *                  descriptionPair("title", "It"),
+ *                  descriptionPair("author", "Stephen King"),
+ *                  descriptionPair("genre",  "horror"),
+ *                  descriptionPair("year", 1986),
+ *                  descriptionPair("average_rating", 4.5),
+ *                  descriptionPair("ISBN", "0-670-81302-8"),
+ *                  descriptionPair("ebook_available", true)
  *              ))
  * }
  * </pre>
  */
 class Description(
-    private var attributeValues: List<DescriptionPair>,
+    private var attributeValues: List<KeyValue>,
     private var dataModel: DataModel? = null,
     private var dataModelName: String = ""
-) : ProtobufSerializable<Query.Instance> {
+) : ProtobufSerializable<QueryPb.Instance> {
 
     init {
         dataModel = dataModel?.run {
@@ -276,7 +300,7 @@ class Description(
             this
         } ?: run{
             DataModel(dataModelName, attributeValues.map {
-                it.toAttributeSchema()
+                AttributeSchema(it.name, it.value.getAttributeType(), true)
             })
         }
     }
@@ -284,7 +308,7 @@ class Description(
     constructor() : this(listOf())
 
     private fun checkConsistency() {
-        val lookupTable = attributeValues.associateBy({it.name}, {it.getAttributeType()})
+        val lookupTable = attributeValues.associateBy({it.name}, {it.value.getAttributeType()})
         dataModel?.run {
             val dataModelNames = mutableSetOf<String>()
             attributes.forEach {
@@ -304,19 +328,19 @@ class Description(
         }
     }
 
-    override fun fromProto(obj: Query.Instance) {
+    override fun fromProto(obj: QueryPb.Instance) {
         dataModel = DataModel().apply {
             fromProto(obj.model)
         }
         dataModelName = obj.model.name
-        val list = mutableListOf<DescriptionPair>()
+        val list = mutableListOf<KeyValue>()
         obj.valuesList.forEach {
-            list.add(DescriptionPair.fromProto(it))
+            list.add(KeyValue.fromProto(it))
         }
         attributeValues = list
     }
 
-    override fun toProto(): Query.Instance = Query.Instance.newBuilder()
+    override fun toProto(): QueryPb.Instance = QueryPb.Instance.newBuilder()
         .also {
             it.model = dataModel?.toProto()
             attributeValues.forEach { attribute ->

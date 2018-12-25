@@ -83,9 +83,7 @@ sealed class CFPQuery {
         fun fromProto(cfp: FipaCfp): CFPQuery = when(cfp.payloadCase) {
             CFPPayloadCase.NOTHING -> CFPQuery.TNone
             CFPPayloadCase.CONTENT -> CFPQuery.TBytes(cfp.content.toByteArray())
-            CFPPayloadCase.QUERY   -> CFPQuery.TQuery(Query().apply {
-                fromProto(cfp.query)
-            })
+            CFPPayloadCase.QUERY   -> CFPQuery.TQuery(Query.fromProto(cfp.query))
             else -> {
                 throw TypeError("Query type not valid!")
             }

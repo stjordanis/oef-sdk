@@ -20,7 +20,7 @@ import fetch.oef.pb.AgentOuterClass
 import fetch.oef.pb.FipaOuterClass
 import java.nio.ByteBuffer
 
-internal typealias Envelope            = AgentOuterClass.Envelope
+internal typealias Envelope           = AgentOuterClass.Envelope
 private typealias Nothing             = AgentOuterClass.Envelope.Nothing
 private typealias AgentSearch         = AgentOuterClass.AgentSearch
 private typealias AgentMessagePb      = AgentOuterClass.Agent.Message
