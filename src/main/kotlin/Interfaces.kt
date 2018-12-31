@@ -18,6 +18,7 @@ package fetch.oef.sdk.kotlin
 import com.google.protobuf.ByteString
 import fetch.oef.pb.AgentOuterClass
 import fetch.oef.pb.FipaOuterClass
+import kotlinx.coroutines.Job
 import java.io.Closeable
 import java.nio.ByteBuffer
 import kotlin.Exception
@@ -48,18 +49,18 @@ interface OEFConnectionInterface : Closeable {
 }
 
 interface OEFAgentRegisterInterface {
-    fun registerAgent(agentDescription: Description)
-    fun unregisterAgent()
+    fun registerAgent(agentDescription: Description): Job
+    fun unregisterAgent(): Job
 }
 
 interface OEFServiceRegisterInterface {
-    fun registerService(serviceDescription: Description)
-    fun unregisterService(serviceDescription: Description)
+    fun registerService(serviceDescription: Description): Job
+    fun unregisterService(serviceDescription: Description): Job
 }
 
 interface OEFSearchInterface {
-    fun searchAgents(searchId: Int, query: Query)
-    fun searchServices(searchId: Int, query: Query)
+    fun searchAgents(searchId: Int, query: Query): Job
+    fun searchServices(searchId: Int, query: Query): Job
 }
 
 interface OEFSearchHandlerInterface {
@@ -129,11 +130,11 @@ sealed class Proposals {
 }
 
 interface AgentMessageEmmiterInterface {
-    fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer)
-    fun sendCFP    (dialogueId: Int, destination: String, query: CFPQuery, messageId: Int = 1, target: Int = 0)
-    fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int? = null)
-    fun sendAccept (dialogueId: Int, destination: String, messageId: Int, target: Int? = null)
-    fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int? = null)
+    fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer): Job
+    fun sendCFP    (dialogueId: Int, destination: String, query: CFPQuery, messageId: Int = 1, target: Int = 0): Job
+    fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int? = null): Job
+    fun sendAccept (dialogueId: Int, destination: String, messageId: Int, target: Int? = null): Job
+    fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int? = null): Job
 }
 
 interface AgentMessageHandlerInterface {

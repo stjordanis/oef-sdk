@@ -212,48 +212,59 @@ class OEFNetworkProxy(
         destroyContext()
     }
 
-    override fun registerAgent(agentDescription: Description) {
+    override fun registerAgent(agentDescription: Description): Job {
         log.info("Register agent. Current list size: ${pendingOutboundMessages.size}")
         pendingOutboundMessages.add(RegisterDescription(agentDescription).toEnvelope())
+        return Job()
     }
 
-    override fun unregisterAgent() {
+    override fun unregisterAgent(): Job {
         pendingOutboundMessages.add(UnregisterDescription().toEnvelope())
+        return Job()
     }
 
-    override fun registerService(serviceDescription: Description) {
+    override fun registerService(serviceDescription: Description): Job {
         pendingOutboundMessages.add(RegisterService(serviceDescription).toEnvelope())
+        return Job()
     }
 
-    override fun unregisterService(serviceDescription: Description) {
+    override fun unregisterService(serviceDescription: Description): Job {
         pendingOutboundMessages.add(RegisterService(serviceDescription).toEnvelope())
+        return Job()
     }
 
-    override fun searchAgents(searchId: Int, query: Query) {
+    override fun searchAgents(searchId: Int, query: Query): Job {
         pendingOutboundMessages.add(SearchAgents(searchId, query).toEnvelope())
+        return Job()
     }
 
-    override fun searchServices(searchId: Int, query: Query) {
+    override fun searchServices(searchId: Int, query: Query): Job {
         pendingOutboundMessages.add(SearchServices(searchId, query).toEnvelope())
+        return Job()
     }
 
-    override fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer) {
+    override fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer): Job {
         pendingOutboundMessages.add(Message(dialogueId, destination, message).toEnvelope())
+        return Job()
     }
 
-    override fun sendCFP(dialogueId: Int, destination: String, query: CFPQuery, messageId: Int, target: Int) {
+    override fun sendCFP(dialogueId: Int, destination: String, query: CFPQuery, messageId: Int, target: Int): Job {
         pendingOutboundMessages.add(CFP(dialogueId, destination, query, messageId, target).toEnvelope())
+        return Job()
     }
 
-    override fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int?) {
+    override fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int?): Job {
         pendingOutboundMessages.add(Propose(dialogueId, destination, proposals, messageId, target).toEnvelope())
+        return Job()
     }
 
-    override fun sendAccept(dialogueId: Int, destination: String, messageId: Int, target: Int?) {
+    override fun sendAccept(dialogueId: Int, destination: String, messageId: Int, target: Int?): Job {
         pendingOutboundMessages.add(Accept(dialogueId, destination, messageId, target).toEnvelope())
+        return Job()
     }
 
-    override fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int?) {
+    override fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int?): Job {
         pendingOutboundMessages.add(Decline(dialogueId, destination, messageId, target).toEnvelope())
+        return Job()
     }
 }

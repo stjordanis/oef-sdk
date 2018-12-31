@@ -204,69 +204,47 @@ class OEFNetworkProxyAsync(
     }
 
     //TODO: Modify the interface to return Job objects
-    override fun registerAgent(agentDescription: Description) {
-        launch {
-            send(RegisterDescription(agentDescription).toEnvelope())
-        }
+    override fun registerAgent(agentDescription: Description) = launch {
+        send(RegisterDescription(agentDescription).toEnvelope())
     }
 
-    override fun unregisterAgent() {
-        launch {
-            send(UnregisterDescription().toEnvelope())
-        }
+    override fun unregisterAgent() = launch {
+        send(UnregisterDescription().toEnvelope())
     }
 
-    override fun registerService(serviceDescription: Description) {
-        launch {
-            send(RegisterService(serviceDescription).toEnvelope())
-        }
+    override fun registerService(serviceDescription: Description) = launch {
+        send(RegisterService(serviceDescription).toEnvelope())
     }
 
-    override fun unregisterService(serviceDescription: Description) {
-        launch {
-            send(RegisterService(serviceDescription).toEnvelope())
-        }
+    override fun unregisterService(serviceDescription: Description) = launch {
+        send(RegisterService(serviceDescription).toEnvelope())
     }
 
-    override fun searchAgents(searchId: Int, query: Query) {
-        launch {
-            send(SearchAgents(searchId, query).toEnvelope())
-        }
+    override fun searchAgents(searchId: Int, query: Query) = launch {
+        send(SearchAgents(searchId, query).toEnvelope())
     }
 
-    override fun searchServices(searchId: Int, query: Query) {
-        launch {
-            send(SearchServices(searchId, query).toEnvelope())
-        }
+    override fun searchServices(searchId: Int, query: Query) = launch {
+        send(SearchServices(searchId, query).toEnvelope())
     }
 
-    override fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer) {
-        launch {
-            send(Message(dialogueId, destination, message).toEnvelope())
-        }
+    override fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer) = launch {
+        send(Message(dialogueId, destination, message).toEnvelope())
     }
 
-    override fun sendCFP(dialogueId: Int, destination: String, query: CFPQuery, messageId: Int, target: Int) {
-        launch {
-            send(CFP(dialogueId, destination, query, messageId, target).toEnvelope())
-        }
+    override fun sendCFP(dialogueId: Int, destination: String, query: CFPQuery, messageId: Int, target: Int) = launch {
+        send(CFP(dialogueId, destination, query, messageId, target).toEnvelope())
     }
 
-    override fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int?) {
-        launch {
-            send(Propose(dialogueId, destination, proposals, messageId, target).toEnvelope())
-        }
+    override fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int?) = launch {
+        send(Propose(dialogueId, destination, proposals, messageId, target).toEnvelope())
     }
 
-    override fun sendAccept(dialogueId: Int, destination: String, messageId: Int, target: Int?) {
-        launch {
-            send(Accept(dialogueId, destination, messageId, target).toEnvelope())
-        }
+    override fun sendAccept(dialogueId: Int, destination: String, messageId: Int, target: Int?) = launch {
+        send(Accept(dialogueId, destination, messageId, target).toEnvelope())
     }
 
-    override fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int?) {
-        launch {
-            send(Decline(dialogueId, destination, messageId, target).toEnvelope())
-        }
+    override fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int?) = launch {
+        send(Decline(dialogueId, destination, messageId, target).toEnvelope())
     }
 }

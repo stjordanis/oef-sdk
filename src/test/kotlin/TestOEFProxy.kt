@@ -21,6 +21,8 @@ import assertk.assert
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import fetch.oef.pb.AgentOuterClass
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TestOEFProxy {
@@ -72,31 +74,30 @@ class TestOEFProxy {
     }
 
     @Test
-    fun `Register agent with OEF node`(){
+    fun `Register agent with OEF node`() = runBlocking {
         val proxy = OEFNetworkProxyAsync("123456", "127.0.0.1")
         val agent = LogAgent(proxy)
         assert(agent.connect()).isTrue()
 
-        agent.registerAgent(Description())
-
-        Thread.sleep(1000)
+        agent.registerAgent(Description()).join()
 
         val proxy2 = OEFNetworkProxyAsync("1234567", "127.0.0.1")
         val foundAgents = mutableListOf<String>()
         val agent2 = LogAgent(proxy2,foundAgents)
         assert(agent2.connect()).isTrue()
-        agent.registerAgent(Description())
-        agent2.searchAgents(1, Query())
 
-        Thread.sleep(1000)
+        agent.registerAgent(Description()).join()
+        agent2.searchAgents(1, Query()).join()
+
+        delay(1000)
 
         assert(foundAgents.find {
             it=="123456"
         }).isNotNull()
 
-        agent.unregisterAgent()
+        agent.unregisterAgent().join()
+        agent2.unregisterAgent().join()
 
-        Thread.sleep(1000)
         agent.close()
         agent2.close()
     }
