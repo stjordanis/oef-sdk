@@ -162,7 +162,9 @@ class OEFNetworkProxyAsync(
                 launch(handlerContext as CoroutineContext) {
                     processMessage(data)
                 }
-            } catch (e: Throwable) {
+            }
+            catch (e: CancellationException){}
+            catch (e: Throwable) {
                 log.warn("Exception in socket read loop!", e)
             }
         }
@@ -176,27 +178,29 @@ class OEFNetworkProxyAsync(
             log.warn("Failed to establish network connection! ", e)
             return@runBlocking false
         }
-        try {
+        val connectionStatus = try {
             handShake()
         } catch (e :Exception) {
             log.error("Handshake with the server failed!", e)
-            return@runBlocking false
+            false
         }
-        launch(coroutineContext){
-            readIOLoop()
+        if (connectionStatus) {
+            launch(context){
+                readIOLoop()
+            }
         }
-        return@runBlocking true
+        return@runBlocking connectionStatus
 
     }
 
     override fun stop() {
-        socketChannel.close()
         context.cancelChildren()
         context.cancel()
         if (!providedContext) {
             handlerContext?.cancelChildren()
             handlerContext?.cancel()
         }
+        socketChannel.close()
     }
 
     //TODO: Modify the interface to return Job objects
