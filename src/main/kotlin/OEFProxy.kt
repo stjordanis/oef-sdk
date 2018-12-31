@@ -52,7 +52,7 @@ abstract class OEFProxy (
         }
     }
 
-    protected fun processMessage(data: ByteBuffer) {
+    protected fun processMessage(data: ByteBuffer) = try {
         if (!::agent.isInitialized) {
             lock.withLock {
                 while (!::agent.isInitialized) {
@@ -101,5 +101,7 @@ abstract class OEFProxy (
                 log.warn("Not supported payload case in AgentMessage (${msg.payloadCase.name})! ")
             }
         }
+    } catch (e: Throwable) {
+        log.error("Failed to process server message!",  e)
     }
 }

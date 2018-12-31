@@ -32,7 +32,7 @@ import kotlin.coroutines.CoroutineContext
 
 const val DEFAULT_OEF_PORT = 3333
 
-
+@Deprecated("Use OEFNetworkProxyAsync instead")
 class OEFNetworkProxy(
     publicKey: String,
     private val oefAddress: String,
