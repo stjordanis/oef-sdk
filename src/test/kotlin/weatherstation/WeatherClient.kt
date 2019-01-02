@@ -18,7 +18,6 @@ package fetch.oef.sdk.kotlin.weatherstation
 
 import fetch.oef.pb.AgentOuterClass
 import fetch.oef.sdk.kotlin.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.nio.ByteBuffer
 
@@ -98,6 +97,4 @@ fun main(args: Array<String>)  = runBlocking<Unit> {
     })
 
     agent.delayUntilStopped()
-
-    delay(100000)
 }

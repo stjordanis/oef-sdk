@@ -214,46 +214,90 @@ class OEFNetworkProxy(
         }
     }
 
+    /**
+     * Register agent with the OEF.
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun registerAgent(agentDescription: Description) = launch {
         send(RegisterDescription(agentDescription).toEnvelope())
     }
 
+    /**
+     * Unregister agent with the OEF.
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun unregisterAgent() = launch {
         send(UnregisterDescription().toEnvelope())
     }
 
+    /**
+     * Register service with the OEF.
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun registerService(serviceDescription: Description) = launch {
         send(RegisterService(serviceDescription).toEnvelope())
     }
 
+    /**
+     * Unregister service with the OEF.
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun unregisterService(serviceDescription: Description) = launch {
         send(RegisterService(serviceDescription).toEnvelope())
     }
 
+    /**
+     * Search for agents
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun searchAgents(searchId: Int, query: Query) = launch {
         send(SearchAgents(searchId, query).toEnvelope())
     }
 
+    /**
+     * Search for services
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun searchServices(searchId: Int, query: Query) = launch {
         send(SearchServices(searchId, query).toEnvelope())
     }
 
+    /**
+     * Send byte message to the other agent
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer) = launch {
         send(Message(dialogueId, destination, message).toEnvelope())
     }
 
+    /**
+     * Send CFP to the other agent
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun sendCFP(dialogueId: Int, destination: String, query: CFPQuery, messageId: Int, target: Int) = launch {
         send(CFP(dialogueId, destination, query, messageId, target).toEnvelope())
     }
 
+    /**
+     * Send proposal to the other agent
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int?) = launch {
         send(Propose(dialogueId, destination, proposals, messageId, target).toEnvelope())
     }
 
+    /**
+     * Send accept message to the other agent
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun sendAccept(dialogueId: Int, destination: String, messageId: Int, target: Int?) = launch {
         send(Accept(dialogueId, destination, messageId, target).toEnvelope())
     }
 
+    /**
+     * Send decline message to the other agent
+     * Non-blocking, if called multiple times the order the messages are sent can be different then the call order!
+     */
     override fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int?) = launch {
         send(Decline(dialogueId, destination, messageId, target).toEnvelope())
     }
