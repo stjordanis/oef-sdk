@@ -138,13 +138,14 @@ private fun createEnvelopeWithAgentMessageBuilder(
             .apply(block)
     )
 
-private fun createFipaMessageBuilder(
+private fun createFipaMessage(
     messageId: Int,
     targetId: Int,
     block: FipaMessageBuilder.()->Unit) = FipaMessagePb.newBuilder()
     .setMsgId(messageId)
     .setTarget(targetId)
     .apply(block)
+    .build()
 
 
 /**
@@ -181,7 +182,7 @@ class CFP (
     private val targetId: Int  = 0
 ) : AgentMessage {
     override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(dialogueId, destination) {
-        createFipaMessageBuilder(messageId, targetId) {
+        fipa = createFipaMessage(messageId, targetId) {
             cfp = CFPQuery.toProto(query)
         }
     }.build()
@@ -204,7 +205,7 @@ class Propose (
     private val targetId: Int? = null
 ) : AgentMessage {
     override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(dialogueId, destination) {
-        createFipaMessageBuilder(messageId, targetId ?: messageId-1) {
+        fipa = createFipaMessage(messageId, targetId ?: messageId-1) {
             propose = Proposals.toProto(proposals)
         }
     }.build()
@@ -225,7 +226,7 @@ class Accept (
     private val targetId: Int? = null
 ) : AgentMessage {
     override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(dialogueId, destination) {
-        createFipaMessageBuilder(messageId, targetId ?: messageId-1) {
+        fipa = createFipaMessage(messageId, targetId ?: messageId-1) {
             accept = FipaAccept.newBuilder().build()
         }
     }.build()
@@ -246,7 +247,7 @@ class Decline (
     private val targetId: Int? = null
 ) : AgentMessage {
     override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(dialogueId, destination) {
-        createFipaMessageBuilder(messageId, targetId ?: messageId-1) {
+        fipa = createFipaMessage(messageId, targetId ?: messageId-1) {
             decline = FipaDecline.newBuilder().build()
         }
     }.build()
