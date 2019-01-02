@@ -18,25 +18,79 @@ package fetch.oef.sdk.kotlin
 import com.google.protobuf.AbstractMessage
 import fetch.oef.pb.AgentOuterClass
 import kotlinx.coroutines.*
-import java.io.IOException
 import java.lang.Exception
 import java.net.InetSocketAddress
+import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.channels.SelectionKey
-import java.nio.channels.Selector
-import java.nio.channels.SocketChannel
-import java.util.concurrent.LinkedBlockingQueue
+import java.nio.channels.AsynchronousCloseException
+import java.nio.channels.AsynchronousSocketChannel
+import java.nio.channels.CompletionHandler
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 
-const val DEFAULT_OEF_PORT = 3333
+private object AsyncIOConnectHandler : CompletionHandler<Void?, CancellableContinuation<Unit>> {
+    override fun completed(result: Void?, attachment: CancellableContinuation<Unit>?) {
+        attachment?.resume(Unit)
+    }
 
-@Deprecated("Use OEFNetworkProxyAsync instead")
+    override fun failed(exc: Throwable, attachment: CancellableContinuation<Unit>?) {
+        if (exc is AsynchronousCloseException && attachment?.isCancelled == true) return
+        attachment?.resumeWithException(exc)
+    }
+}
+
+private object AsyncIOHandler : CompletionHandler<Int, CancellableContinuation<Int>> {
+    override fun completed(result: Int, attachment: CancellableContinuation<Int>?) {
+        attachment?.resume(result)
+    }
+
+    override fun failed(exc: Throwable, attachment: CancellableContinuation<Int>?) {
+        if (exc is AsynchronousCloseException && attachment?.isCancelled == true) return
+        attachment?.resumeWithException(exc)
+    }
+}
+
+
+private suspend fun AsynchronousSocketChannel.aConnect(address: SocketAddress) = suspendCancellableCoroutine<Unit> {
+    connect(address, it, AsyncIOConnectHandler)
+    it.invokeOnCancellation {
+        try {
+            close()
+        } catch (t: Throwable){}
+    }
+}
+
+private suspend fun AsynchronousSocketChannel.aWrite(buffer: ByteBuffer) = suspendCancellableCoroutine<Int> {
+    write(buffer, it, AsyncIOHandler)
+}
+
+private suspend fun AsynchronousSocketChannel.aWriteFullBuffer(buffer: ByteBuffer) {
+    var bytesWritten = 1
+    while(bytesWritten>0 && buffer.hasRemaining()) {
+        bytesWritten = aWrite(buffer)
+    }
+}
+
+private suspend fun AsynchronousSocketChannel.aRead(buffer: ByteBuffer) = suspendCancellableCoroutine<Int> {
+    read(buffer, it, AsyncIOHandler)
+}
+
+private suspend fun AsynchronousSocketChannel.aReadFullBuffer(buffer: ByteBuffer) {
+    var bytesRead = 1
+    while (bytesRead>0 && buffer.hasRemaining()) {
+        bytesRead = aRead(buffer)
+    }
+}
+
+
 class OEFNetworkProxy(
     publicKey: String,
     private val oefAddress: String,
-    private val port: Int = DEFAULT_OEF_PORT
+    private val port: Int = DEFAULT_OEF_PORT,
+    private var handlerContext: CoroutineContext? = null
 ) : OEFProxy(publicKey), CoroutineScope {
 
     companion object {
@@ -44,227 +98,152 @@ class OEFNetworkProxy(
         const val INT_SIZE = 4
     }
 
-    private var socketChannel: SocketChannel = SocketChannel.open()
-    private var selector: Selector           = Selector.open()
-    private val pendingOutboundMessages      = LinkedBlockingQueue<Envelope>()
-    private var activeIOLoop: Boolean        = true
-    private var connectionLoop: Boolean      = true
-    private lateinit var context: CoroutineContext
+    private var socketChannel: AsynchronousSocketChannel = AsynchronousSocketChannel.open()
+    private val context: CoroutineContext = SupervisorJob() + Dispatchers.IO
+    private var providedContext: Boolean  = true
 
     init {
-        socketChannel.configureBlocking(false)
-        socketChannel.connect(InetSocketAddress(oefAddress, port))
-        socketChannel.register(selector, SelectionKey.OP_CONNECT or SelectionKey.OP_WRITE or SelectionKey.OP_READ)
-    }
-
-    private fun initContext() {
-        context = SupervisorJob() + Dispatchers.IO
-        launch {
-            ioLoop()
+        handlerContext = handlerContext ?: let {
+            providedContext = false
+            SupervisorJob() + Dispatchers.Default
         }
-    }
-
-    private fun destroyContext() {
-        context.cancelChildren()
-        context.cancel()
     }
 
     override val coroutineContext: CoroutineContext
         get() = context
 
-    private fun ioLoop() {
-        launch {
-            while (activeIOLoop){
-                pendingOutboundMessages.take()?.let{
-                    launch {
-                        send(socketChannel, it)
-                    }
-                }
-            }
-        }
-        while(activeIOLoop) {
-            val readyChannels = selector.select()
-            if (readyChannels == 0) continue
-            for (key in selector.selectedKeys()) {
-                if (key.isReadable) {
-                    launch {
-                        try {
-                            val data = receive(key.channel() as SocketChannel)
-                            processMessage(data)
-                        } catch (e: Exception) {
-                            log.warn("Exception in socket read loop!", e)
-                        }
-                    }
-                }
-                if (key.isWritable) {
-                    log.warn("write loop")
-                }
-            }
-        }
-    }
 
-    private fun send(channel: SocketChannel, data: AbstractMessage) {
-        val sizeBuffer =  ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
+    private suspend fun send(data: AbstractMessage) {
+        val sizeBuffer =  ByteBuffer.allocate(INT_SIZE).order(ByteOrder.LITTLE_ENDIAN)
         sizeBuffer.putInt(data.serializedSize)
         sizeBuffer.flip()
         log.info("sending data of size: ${data.serializedSize}")
-        var bytesWritten = 1
-        while(bytesWritten>0 && sizeBuffer.hasRemaining()) {
-            channel.write(sizeBuffer)
-        }
+        socketChannel.aWriteFullBuffer(sizeBuffer)
         val byteBuffer: ByteBuffer = ByteBuffer.wrap(data.toByteArray())
-        bytesWritten = 1
-        while(bytesWritten>0 && byteBuffer.hasRemaining()) {
-            channel.write(byteBuffer)
-        }
+        socketChannel.aWriteFullBuffer(byteBuffer)
     }
 
-    private fun receive(channel: SocketChannel): ByteBuffer {
-        val sizeBuffer = ByteBuffer.allocate(INT_SIZE).order(ByteOrder.LITTLE_ENDIAN)
-
-        var bytesRead = 1
-        while (bytesRead>0 && sizeBuffer.hasRemaining()) {
-            bytesRead = channel.read(sizeBuffer)
-        }
+    private suspend fun receive(): ByteBuffer {
+        val sizeBuffer = ByteBuffer.allocate(OEFNetworkProxy.INT_SIZE).order(ByteOrder.LITTLE_ENDIAN)
+        socketChannel.aReadFullBuffer(sizeBuffer)
         sizeBuffer.flip()
         val size = sizeBuffer.int
         val buffer = ByteBuffer.allocate(size)
-        bytesRead = 1
-        while(bytesRead>0 && buffer.hasRemaining()){
-            bytesRead = channel.read(buffer)
-        }
+        socketChannel.aReadFullBuffer(buffer)
         buffer.flip()
         return buffer
     }
 
-    private fun handShake(channel: SocketChannel): Boolean {
+    private suspend fun handShake(): Boolean {
         //Step 1: Agent --(ID)--> OEF
         val publicKeyMsg = AgentOuterClass.Agent.Server.ID.newBuilder()
             .setPublicKey(publicKey)
             .build()
-        send(channel, publicKeyMsg)
+        send(publicKeyMsg)
         //Step 2: OEF --(Phrase)--> Agent
-        val resp1  = receive(channel)
+        val resp1  = receive()
         val phrase = AgentOuterClass.Server.Phrase.parseFrom(resp1)
         if (!phrase.hasPhrase()) return false
         //Step 3: Agent --(Answer)--> OEF
         val answer = AgentOuterClass.Agent.Server.Answer.newBuilder()
             .setAnswer(phrase.phrase)
             .build()
-        send(channel, answer)
+        send(answer)
         //Step 4: OEF --(Connected)--> Agent
-        val resp2 = receive(channel)
+        val resp2 = receive()
         val connected = AgentOuterClass.Server.Connected.parseFrom(resp2)
         return connected.status
     }
 
-    override fun connect(): Boolean {
-        while(connectionLoop){
-            val readyChannels = selector.select()
-            if (readyChannels==0) continue
-            for(key in selector.selectedKeys()){
-                if (key.isConnectable){
-                    val channel = key.channel() as SocketChannel
-                    try {
-                        while (channel.isConnectionPending) {
-                            channel.finishConnect()
-                        }
-                    } catch (e: IOException){
-                        log.error("Failed to establish network connection!", e)
-                        return false
-                    }
-                }
-                if (key.isWritable){
-                    val channel = key.channel() as SocketChannel
-                    key.cancel()
-                    selector.selectNow()
-                    return try {
-                        channel.configureBlocking(true)
-                        handShake(channel)
-                    } catch (e: Exception) {
-                        log.error("Handshake with the server failed!", e)
-                        false
-                    } finally {
-                        try {
-                            channel.configureBlocking(false)
-                            channel.register(selector, SelectionKey.OP_READ or SelectionKey.OP_WRITE)
-                            log.info("Connection established with OEF node $oefAddress:$port")
-                            activeIOLoop   = true
-                            connectionLoop = false
-                            initContext()
-                        } catch (e: Exception) {
-                            log.warn("Failed to switch back to non-blocking mode!", e)
-                        }
-                    }
-                } else {
-                    continue
+    private suspend fun readIOLoop() {
+        while (isActive) {
+            try {
+                val data = receive()
+                launch(handlerContext as CoroutineContext) {
+                    processMessage(data)
                 }
             }
+            catch (e: CancellationException){}
+            catch (e: Throwable) {
+                log.warn("Exception in socket read loop!", e)
+            }
         }
-        return true
+    }
+
+    override fun connect(): Boolean = runBlocking {
+        try {
+            socketChannel.aConnect(InetSocketAddress(oefAddress, port))
+            socketChannel.remoteAddress ?: return@runBlocking false
+        } catch (e: Exception) {
+            log.warn("Failed to establish network connection! ", e)
+            return@runBlocking false
+        }
+        val connectionStatus = try {
+            handShake()
+        } catch (e :Exception) {
+            log.error("Handshake with the server failed!", e)
+            false
+        }
+        if (connectionStatus) {
+            launch(context){
+                readIOLoop()
+            }
+        }
+        return@runBlocking connectionStatus
+
     }
 
     override fun stop() {
-        activeIOLoop   = false
-        connectionLoop = true
+        context.cancelChildren()
+        context.cancel()
+        if (!providedContext) {
+            handlerContext?.cancelChildren()
+            handlerContext?.cancel()
+        }
         socketChannel.close()
-        selector.close()
-        destroyContext()
     }
 
-    override fun registerAgent(agentDescription: Description): Job {
-        log.info("Register agent. Current list size: ${pendingOutboundMessages.size}")
-        pendingOutboundMessages.add(RegisterDescription(agentDescription).toEnvelope())
-        return Job()
+    override fun registerAgent(agentDescription: Description) = launch {
+        send(RegisterDescription(agentDescription).toEnvelope())
     }
 
-    override fun unregisterAgent(): Job {
-        pendingOutboundMessages.add(UnregisterDescription().toEnvelope())
-        return Job()
+    override fun unregisterAgent() = launch {
+        send(UnregisterDescription().toEnvelope())
     }
 
-    override fun registerService(serviceDescription: Description): Job {
-        pendingOutboundMessages.add(RegisterService(serviceDescription).toEnvelope())
-        return Job()
+    override fun registerService(serviceDescription: Description) = launch {
+        send(RegisterService(serviceDescription).toEnvelope())
     }
 
-    override fun unregisterService(serviceDescription: Description): Job {
-        pendingOutboundMessages.add(RegisterService(serviceDescription).toEnvelope())
-        return Job()
+    override fun unregisterService(serviceDescription: Description) = launch {
+        send(RegisterService(serviceDescription).toEnvelope())
     }
 
-    override fun searchAgents(searchId: Int, query: Query): Job {
-        pendingOutboundMessages.add(SearchAgents(searchId, query).toEnvelope())
-        return Job()
+    override fun searchAgents(searchId: Int, query: Query) = launch {
+        send(SearchAgents(searchId, query).toEnvelope())
     }
 
-    override fun searchServices(searchId: Int, query: Query): Job {
-        pendingOutboundMessages.add(SearchServices(searchId, query).toEnvelope())
-        return Job()
+    override fun searchServices(searchId: Int, query: Query) = launch {
+        send(SearchServices(searchId, query).toEnvelope())
     }
 
-    override fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer): Job {
-        pendingOutboundMessages.add(Message(dialogueId, destination, message).toEnvelope())
-        return Job()
+    override fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer) = launch {
+        send(Message(dialogueId, destination, message).toEnvelope())
     }
 
-    override fun sendCFP(dialogueId: Int, destination: String, query: CFPQuery, messageId: Int, target: Int): Job {
-        pendingOutboundMessages.add(CFP(dialogueId, destination, query, messageId, target).toEnvelope())
-        return Job()
+    override fun sendCFP(dialogueId: Int, destination: String, query: CFPQuery, messageId: Int, target: Int) = launch {
+        send(CFP(dialogueId, destination, query, messageId, target).toEnvelope())
     }
 
-    override fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int?): Job {
-        pendingOutboundMessages.add(Propose(dialogueId, destination, proposals, messageId, target).toEnvelope())
-        return Job()
+    override fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int?) = launch {
+        send(Propose(dialogueId, destination, proposals, messageId, target).toEnvelope())
     }
 
-    override fun sendAccept(dialogueId: Int, destination: String, messageId: Int, target: Int?): Job {
-        pendingOutboundMessages.add(Accept(dialogueId, destination, messageId, target).toEnvelope())
-        return Job()
+    override fun sendAccept(dialogueId: Int, destination: String, messageId: Int, target: Int?) = launch {
+        send(Accept(dialogueId, destination, messageId, target).toEnvelope())
     }
 
-    override fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int?): Job {
-        pendingOutboundMessages.add(Decline(dialogueId, destination, messageId, target).toEnvelope())
-        return Job()
+    override fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int?) = launch {
+        send(Decline(dialogueId, destination, messageId, target).toEnvelope())
     }
 }

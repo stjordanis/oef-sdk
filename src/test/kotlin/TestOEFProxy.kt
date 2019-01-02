@@ -33,7 +33,7 @@ class TestOEFProxy {
 
     @Test
     fun connect() {
-        val proxy = OEFNetworkProxyAsync("12345", "127.0.0.1")
+        val proxy = OEFNetworkProxy("12345", "127.0.0.1")
         assert(proxy.connect()).isTrue()
         proxy.stop()
     }
@@ -75,13 +75,13 @@ class TestOEFProxy {
 
     @Test
     fun `Register agent with OEF node`() = runBlocking {
-        val proxy = OEFNetworkProxyAsync("123456", "127.0.0.1")
+        val proxy = OEFNetworkProxy("123456", "127.0.0.1")
         val agent = LogAgent(proxy)
         assert(agent.connect()).isTrue()
 
         agent.registerAgent(Description()).join()
 
-        val proxy2 = OEFNetworkProxyAsync("1234567", "127.0.0.1")
+        val proxy2 = OEFNetworkProxy("1234567", "127.0.0.1")
         val foundAgents = mutableListOf<String>()
         val agent2 = LogAgent(proxy2,foundAgents)
         assert(agent2.connect()).isTrue()
