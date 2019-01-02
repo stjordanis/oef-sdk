@@ -203,6 +203,16 @@ class OEFNetworkProxy(
         socketChannel.close()
     }
 
+    override fun delay(untilAgentStopped: Boolean, time: Long) = launch {
+        if (untilAgentStopped){
+            while (isActive) {
+                delay(time)
+            }
+        } else {
+            delay(time)
+        }
+    }
+
     override fun registerAgent(agentDescription: Description) = launch {
         send(RegisterDescription(agentDescription).toEnvelope())
     }

@@ -212,6 +212,16 @@ class OEFNetworkProxyNonBlocking(
         destroyContext()
     }
 
+    override fun delay(untilAgentStopped: Boolean, time: Long) = launch {
+        if (untilAgentStopped){
+            while (isActive) {
+                delay(time)
+            }
+        } else {
+            delay(time)
+        }
+    }
+
     override fun registerAgent(agentDescription: Description): Job {
         log.info("Register agent. Current list size: ${pendingOutboundMessages.size}")
         pendingOutboundMessages.add(RegisterDescription(agentDescription).toEnvelope())

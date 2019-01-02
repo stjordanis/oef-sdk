@@ -39,6 +39,10 @@ interface OEFCommunicationErrorHandlerInterface {
     fun onError(operation: AgentOuterClass.Server.AgentMessage.Error.Operation, dialogueId: Int, messageId: Int)
 }
 
+interface OEFDelayInterface {
+    fun delay(untilAgentStopped: Boolean, time: Long = 1000L): Job
+}
+
 interface OEFConnectionInterface : Closeable {
     fun connect(): Boolean
     fun stop()
@@ -76,14 +80,14 @@ private typealias CFPPayloadCase     = FipaOuterClass.Fipa.Cfp.PayloadCase
 private typealias ProposePayloadCase = FipaOuterClass.Fipa.Propose.PayloadCase
 
 sealed class CFPQuery {
-    data class TQuery(val value: Query)     : CFPQuery()
-    data class TBytes(val value: ByteArray) : CFPQuery()
-    object     TNone                        : CFPQuery()
+    data class TQuery(val value: Query)      : CFPQuery()
+    data class TBytes(val value: ByteBuffer) : CFPQuery()
+    object     TNone                         : CFPQuery()
 
     companion object {
         fun fromProto(cfp: FipaCfp): CFPQuery = when(cfp.payloadCase) {
             CFPPayloadCase.NOTHING -> CFPQuery.TNone
-            CFPPayloadCase.CONTENT -> CFPQuery.TBytes(cfp.content.toByteArray())
+            CFPPayloadCase.CONTENT -> CFPQuery.TBytes(cfp.content.asReadOnlyByteBuffer())
             CFPPayloadCase.QUERY   -> CFPQuery.TQuery(Query.fromProto(cfp.query))
             else -> {
                 throw TypeError("Query type not valid!")
@@ -100,13 +104,17 @@ sealed class CFPQuery {
     }
 }
 
+fun cfpQueryFrom()                  = CFPQuery.TNone
+fun cfpQueryFrom(query: Query)      = CFPQuery.TQuery(query)
+fun cfpQueryFrom(bytes: ByteBuffer) = CFPQuery.TBytes(bytes)
+
 sealed class Proposals {
-    data class TBytes(val value: ByteArray)                : Proposals()
+    data class TBytes(val value: ByteBuffer)               : Proposals()
     data class TDescriptions(val value: List<Description>) : Proposals()
 
     companion object {
         fun fromProto(propose: FipaPropose): Proposals = when(propose.payloadCase){
-            ProposePayloadCase.CONTENT -> Proposals.TBytes(propose.content.toByteArray())
+            ProposePayloadCase.CONTENT -> Proposals.TBytes(propose.content.asReadOnlyByteBuffer())
             else -> Proposals.TDescriptions(propose.proposals?.objectsList?.map{proposal->
                 Description().apply {
                     fromProto(proposal)
@@ -129,6 +137,9 @@ sealed class Proposals {
     }
 }
 
+fun proposalsFrom(vararg proposals: Description) = Proposals.TDescriptions(proposals.asList())
+fun proposalsFrom(bytes: ByteBuffer)             = Proposals.TBytes(bytes)
+
 interface AgentMessageEmmiterInterface {
     fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer): Job
     fun sendCFP    (dialogueId: Int, destination: String, query: CFPQuery, messageId: Int = 1, target: Int = 0): Job
@@ -138,7 +149,7 @@ interface AgentMessageEmmiterInterface {
 }
 
 interface AgentMessageHandlerInterface {
-    fun onMessage(dialogueId: Int, origin: String, conent: ByteArray)
+    fun onMessage(dialogueId: Int, origin: String, content: ByteBuffer)
     fun onCFP    (dialogueId: Int, origin: String, messageId: Int, target: Int, query: CFPQuery)
     fun onPropose(dialogueId: Int, origin: String, messageId: Int, target: Int, proposals: Proposals)
     fun onAccept (dialogueId: Int, origin: String, messageId: Int, target: Int)

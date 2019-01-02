@@ -111,12 +111,15 @@ class AttributeSchema(
  * </pre>
  */
 class DataModel(
-    private var name: String,
+    name: String,
     attributes: List<AttributeSchema>,
     private var description: String? = null
 ) : ProtobufSerializable<QueryPb.DataModel> {
 
     var attributes: List<AttributeSchema> = attributes
+        private set
+
+    var name: String = name
         private set
 
     constructor() : this("", listOf())
@@ -276,7 +279,7 @@ fun <T> descriptionPair(name: String, value: T): KeyValue = KeyValue(name,Value.
  *
  * <pre>
  * {@code
- *     val It = Description(listOf(
+ *     val It = descriptionOf(
  *                  descriptionPair("title", "It"),
  *                  descriptionPair("author", "Stephen King"),
  *                  descriptionPair("genre",  "horror"),
@@ -284,18 +287,23 @@ fun <T> descriptionPair(name: String, value: T): KeyValue = KeyValue(name,Value.
  *                  descriptionPair("average_rating", 4.5),
  *                  descriptionPair("ISBN", "0-670-81302-8"),
  *                  descriptionPair("ebook_available", true)
- *              ))
+ *              )
  * }
  * </pre>
  */
 class Description(
-    private var attributeValues: List<KeyValue>,
-    private var dataModel: DataModel? = null,
-    private var dataModelName: String = ""
+    attributeValues: List<KeyValue>,
+    dataModel: DataModel? = null,
+    private var dataModelName: String = dataModel?.name ?: ""
 ) : ProtobufSerializable<QueryPb.Instance> {
 
+    var attributeValues: List<KeyValue> = attributeValues
+        private set
+    var dataModel: DataModel?
+        private set
+
     init {
-        dataModel = dataModel?.run {
+       this.dataModel = dataModel?.run {
             checkConsistency()
             this
         } ?: run{
@@ -365,3 +373,5 @@ class Description(
         return true
     }
 }
+
+fun descriptionOf(vararg keyValues: KeyValue) = Description(keyValues.asList())

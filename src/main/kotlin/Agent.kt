@@ -15,9 +15,14 @@
  */
 package fetch.oef.sdk.kotlin
 
+import kotlin.coroutines.CoroutineContext
+
 abstract class Agent (
     private val proxy: OEFProxy
-) : OEFProxyInterface by proxy, AgentCommunicationHandlerInterface, OEFConnectionInterface {
+) : OEFProxyInterface by proxy,
+    OEFDelayInterface by proxy,
+    AgentCommunicationHandlerInterface,
+    OEFConnectionInterface {
 
     override fun connect(): Boolean {
         proxy.setAgent(this)
@@ -28,3 +33,10 @@ abstract class Agent (
         proxy.stop()
     }
 }
+
+abstract class OEFAgent (
+    publicKey: String,
+    oefAddress: String,
+    port: Int = DEFAULT_OEF_PORT,
+    handlerContext: CoroutineContext? = null
+) : Agent(OEFNetworkProxy(publicKey, oefAddress, port, handlerContext))

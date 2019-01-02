@@ -27,7 +27,7 @@ private typealias MsgCase            = FipaOuterClass.Fipa.Message.MsgCase
 
 abstract class OEFProxy (
     protected val publicKey: String
-) : OEFProxyInterface {
+) : OEFProxyInterface, OEFDelayInterface {
 
 
     companion object {
@@ -70,7 +70,7 @@ abstract class OEFProxy (
             }
             PayloadCase.CONTENT -> msg.content?.run {
                 when (payloadCase) {
-                    ContentPayloadCase.CONTENT -> agent.onMessage(dialogueId, origin, content.toByteArray())
+                    ContentPayloadCase.CONTENT -> agent.onMessage(dialogueId, origin, content.asReadOnlyByteBuffer())
                     ContentPayloadCase.FIPA -> fipa?.let { fipa ->
                         when (fipa.msgCase) {
                             MsgCase.CFP -> fipa.cfp?.let { cfp ->

@@ -23,6 +23,7 @@ import assertk.assertions.isTrue
 import fetch.oef.pb.AgentOuterClass
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import java.nio.ByteBuffer
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TestOEFProxy {
@@ -52,7 +53,7 @@ class TestOEFProxy {
             foundAgents?.addAll(0, agents)
         }
 
-        override fun onMessage(dialogueId: Int, origin: String, conent: ByteArray) {
+        override fun onMessage(dialogueId: Int, origin: String, content: ByteBuffer) {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 
