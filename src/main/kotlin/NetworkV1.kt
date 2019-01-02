@@ -212,14 +212,8 @@ class OEFNetworkProxyNonBlocking(
         destroyContext()
     }
 
-    override fun delay(untilAgentStopped: Boolean, time: Long) = launch {
-        if (untilAgentStopped){
-            while (isActive) {
-                delay(time)
-            }
-        } else {
-            delay(time)
-        }
+    override suspend fun delayUntilStopped() {
+
     }
 
     override fun registerAgent(agentDescription: Description): Job {

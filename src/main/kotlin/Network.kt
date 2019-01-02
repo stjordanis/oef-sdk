@@ -18,6 +18,8 @@ package fetch.oef.sdk.kotlin
 import com.google.protobuf.AbstractMessage
 import fetch.oef.pb.AgentOuterClass
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.lang.Exception
 import java.net.InetSocketAddress
 import java.net.SocketAddress
@@ -101,6 +103,7 @@ class OEFNetworkProxy(
     private var socketChannel: AsynchronousSocketChannel = AsynchronousSocketChannel.open()
     private val context: CoroutineContext = SupervisorJob() + Dispatchers.IO
     private var providedContext: Boolean  = true
+    private var socketLock: Mutex = Mutex()
 
     init {
         handlerContext = handlerContext ?: let {
@@ -117,10 +120,12 @@ class OEFNetworkProxy(
         val sizeBuffer =  ByteBuffer.allocate(INT_SIZE).order(ByteOrder.LITTLE_ENDIAN)
         sizeBuffer.putInt(data.serializedSize)
         sizeBuffer.flip()
-        log.info("sending data of size: ${data.serializedSize}")
-        socketChannel.aWriteFullBuffer(sizeBuffer)
         val byteBuffer: ByteBuffer = ByteBuffer.wrap(data.toByteArray())
-        socketChannel.aWriteFullBuffer(byteBuffer)
+        log.info("sending data of size: ${data.serializedSize}")
+        socketLock.withLock {
+            socketChannel.aWriteFullBuffer(sizeBuffer)
+            socketChannel.aWriteFullBuffer(byteBuffer)
+        }
     }
 
     private suspend fun receive(): ByteBuffer {
@@ -203,13 +208,9 @@ class OEFNetworkProxy(
         socketChannel.close()
     }
 
-    override fun delay(untilAgentStopped: Boolean, time: Long) = launch {
-        if (untilAgentStopped){
-            while (isActive) {
-                delay(time)
-            }
-        } else {
-            delay(time)
+    override suspend fun delayUntilStopped() {
+        while (isActive) {
+            delay(500L)
         }
     }
 

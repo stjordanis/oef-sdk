@@ -40,7 +40,7 @@ interface OEFCommunicationErrorHandlerInterface {
 }
 
 interface OEFDelayInterface {
-    fun delay(untilAgentStopped: Boolean, time: Long = 1000L): Job
+    suspend fun delayUntilStopped()
 }
 
 interface OEFConnectionInterface : Closeable {
