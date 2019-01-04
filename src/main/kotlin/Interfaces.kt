@@ -53,18 +53,18 @@ interface OEFConnectionInterface : Closeable {
 }
 
 interface OEFAgentRegisterInterface {
-    fun registerAgent(agentDescription: Description): Job
-    fun unregisterAgent(): Job
+    fun registerAgent(agentDescription: Description)
+    fun unregisterAgent()
 }
 
 interface OEFServiceRegisterInterface {
-    fun registerService(serviceDescription: Description): Job
-    fun unregisterService(serviceDescription: Description): Job
+    fun registerService(serviceDescription: Description)
+    fun unregisterService(serviceDescription: Description)
 }
 
 interface OEFSearchInterface {
-    fun searchAgents(searchId: Int, query: Query): Job
-    fun searchServices(searchId: Int, query: Query): Job
+    fun searchAgents(searchId: Int, query: Query)
+    fun searchServices(searchId: Int, query: Query)
 }
 
 interface OEFSearchHandlerInterface {
@@ -141,11 +141,11 @@ fun proposalsFrom(vararg proposals: Description) = Proposals.TDescriptions(propo
 fun proposalsFrom(bytes: ByteBuffer)             = Proposals.TBytes(bytes)
 
 interface AgentMessageEmmiterInterface {
-    fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer): Job
-    fun sendCFP    (dialogueId: Int, destination: String, query: CFPQuery, messageId: Int = 1, target: Int = 0): Job
-    fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int? = null): Job
-    fun sendAccept (dialogueId: Int, destination: String, messageId: Int, target: Int? = null): Job
-    fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int? = null): Job
+    fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer)
+    fun sendCFP    (dialogueId: Int, destination: String, query: CFPQuery, messageId: Int = 1, target: Int = 0)
+    fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int? = null)
+    fun sendAccept (dialogueId: Int, destination: String, messageId: Int, target: Int? = null)
+    fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int? = null)
 }
 
 interface AgentMessageHandlerInterface {

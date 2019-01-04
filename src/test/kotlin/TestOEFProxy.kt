@@ -80,15 +80,15 @@ class TestOEFProxy {
         val agent = LogAgent(proxy)
         assert(agent.connect()).isTrue()
 
-        agent.registerAgent(Description()).join()
+        agent.registerAgent(Description())
 
         val proxy2 = OEFNetworkProxy("1234567", "127.0.0.1")
         val foundAgents = mutableListOf<String>()
         val agent2 = LogAgent(proxy2,foundAgents)
         assert(agent2.connect()).isTrue()
 
-        agent.registerAgent(Description()).join()
-        agent2.searchAgents(1, Query()).join()
+        agent.registerAgent(Description())
+        agent2.searchAgents(1, Query())
 
         delay(1000)
 
@@ -96,8 +96,8 @@ class TestOEFProxy {
             it=="123456"
         }).isNotNull()
 
-        agent.unregisterAgent().join()
-        agent2.unregisterAgent().join()
+        agent.unregisterAgent()
+        agent2.unregisterAgent()
 
         agent.close()
         agent2.close()
