@@ -166,11 +166,27 @@ class DataModel(
 
 class UnknownTypeException(message: String) : Exception(message)
 
+data class Location(
+    val lon: Double,
+    val lat: Double
+) {
+    fun toProto(): QueryPb.Location = QueryPb.Location.newBuilder()
+        .also {
+            it.lat = lat
+            it.lon = lon
+        }.build()
+
+    companion object {
+        fun fromProto(pb: QueryPb.Location) = Location(pb.lon, pb.lat)
+    }
+}
+
 sealed class Value {
     data class INT   (val value: Long)    : Value()
     data class DOUBLE(val value: Double)  : Value()
     data class BOOL  (val value: Boolean) : Value()
     data class STRING(val value: String)  : Value()
+    data class LOCATION(val value: Location) : Value()
 
     companion object {
         fun fromProto(obj: QueryPb.Value) = when{
@@ -178,6 +194,7 @@ sealed class Value {
             obj.hasD() -> DOUBLE(obj.d)
             obj.hasB() -> BOOL(obj.b)
             obj.hasS() -> STRING(obj.s)
+            obj.hasL() -> LOCATION(Location.fromProto(obj.l))
             else -> {
                 throw UnknownTypeException("Unexpected Value type!")
             }
@@ -189,6 +206,7 @@ sealed class Value {
             is Float         -> DOUBLE(value.toDouble())
             is Boolean       -> BOOL(value)
             is String        -> STRING(value)
+            is Location      -> LOCATION(value)
             is Value         -> value
             is QueryPb.Value -> fromProto(value)
             else -> {
@@ -204,6 +222,7 @@ sealed class Value {
                 is DOUBLE -> it.d = value
                 is BOOL   -> it.b = value
                 is STRING -> it.s = value
+                is LOCATION -> it.l = value.toProto()
             }
         }
         .build()
@@ -213,6 +232,7 @@ sealed class Value {
         is Value.DOUBLE -> AttributeType.DOUBLE
         is Value.BOOL   -> AttributeType.BOOL
         is Value.STRING -> AttributeType.STRING
+        is Value.LOCATION -> AttributeType.LOCATION
     }
 
     override fun equals(other: Any?): Boolean {
@@ -234,6 +254,10 @@ sealed class Value {
             }
             is STRING -> {
                 other as STRING
+                if (value != other.value) return false
+            }
+            is LOCATION -> {
+                other as LOCATION
                 if (value != other.value) return false
             }
         }

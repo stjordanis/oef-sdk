@@ -19,26 +19,24 @@ import fetch.oef.pb.QueryOuterClass
 import fetch.oef.pb.QueryOuterClass.Query as QueryPb
 
 
-sealed class ConstraintType {
+sealed class ConstraintExpr {
 
-    fun toProtoConstraintType(): QueryPb.Constraint.ConstraintType = QueryPb.Constraint.ConstraintType.newBuilder()
+    fun toProtoConstraintExpr(): QueryPb.ConstraintExpr = QueryPb.ConstraintExpr.newBuilder()
         .also {
             when (this) {
-                is And      -> it.and      = toProto()
-                is Or       -> it.or       = toProto()
-                is Range    -> it.range    = toProto()
-                is Relation -> it.relation = toProto()
-                is Set      -> it.set      = toProto()
+                is And        -> it.and        = toProto()
+                is Or         -> it.or         = toProto()
+                is Not        -> it.not        = toProto()
+                is Constraint -> it.constraint = toProto()
             }
         }.build()
 
     companion object {
-        fun fromProto(obj: QueryPb.Constraint.ConstraintType): ConstraintType  = when {
-            obj.hasAnd()   -> And.fromProto(obj.and)
-            obj.hasOr()    -> Or.fromProto(obj.or)
-            obj.hasRange() -> Range.fromProto(obj.range)
-            obj.hasRange() -> Relation.fromProto(obj.relation)
-            obj.hasSet()   -> Set.fromProto(obj.set)
+        fun fromProto(obj: QueryPb.ConstraintExpr): ConstraintExpr  = when {
+            obj.hasAnd()        -> And.fromProto(obj.and)
+            obj.hasOr()         -> Or.fromProto(obj.or)
+            obj.hasNot()        -> Not.fromProto(obj.not)
+            obj.hasConstraint() -> Constraint.fromProto(obj.constraint)
             else -> {
                 throw UnknownTypeException("Unknown ConstraintType!")
             }
@@ -46,54 +44,93 @@ sealed class ConstraintType {
     }
 }
 
-class And(val constraints: List<ConstraintType>) : ConstraintType() {
-    fun toProto(): QueryPb.Constraint.ConstraintType.And =  QueryPb.Constraint.ConstraintType.And.newBuilder()
+class And(val constraints: List<ConstraintExpr>) : ConstraintExpr() {
+    fun toProto(): QueryPb.ConstraintExpr.And =  QueryPb.ConstraintExpr.And.newBuilder()
         .also {
             constraints.forEach { constraint->
-                it.addExpr(constraint.toProtoConstraintType())
+                it.addExpr(constraint.toProtoConstraintExpr())
             }
         }
         .build()
 
     companion object {
-        fun fromProto(obj: QueryPb.Constraint.ConstraintType.And): And = And(obj.exprList.map { ConstraintType.fromProto(it) })
+        fun fromProto(obj: QueryPb.ConstraintExpr.And): And = And(obj.exprList.map { ConstraintExpr.fromProto(it) })
     }
 }
 
-class Or(val constraints: List<ConstraintType>)  : ConstraintType() {
-    fun toProto(): QueryPb.Constraint.ConstraintType.Or = QueryPb.Constraint.ConstraintType.Or.newBuilder()
+class Or(val constraints: List<ConstraintExpr>)  : ConstraintExpr() {
+    fun toProto(): QueryPb.ConstraintExpr.Or = QueryPb.ConstraintExpr.Or.newBuilder()
         .also {
             constraints.forEach { constraint->
-                it.addExpr(constraint.toProtoConstraintType())
+                it.addExpr(constraint.toProtoConstraintExpr())
             }
         }
         .build()
 
     companion object {
-        fun fromProto(obj: QueryPb.Constraint.ConstraintType.Or): Or = Or(obj.exprList.map { ConstraintType.fromProto(it) })
+        fun fromProto(obj: QueryPb.ConstraintExpr.Or): Or = Or(obj.exprList.map { ConstraintExpr.fromProto(it) })
     }
 }
 
+class Not(val constraint: ConstraintExpr) : ConstraintExpr() {
+    fun toProto(): QueryPb.ConstraintExpr.Not = QueryPb.ConstraintExpr.Not.newBuilder()
+        .also {
+            it.expr = constraint.toProtoConstraintExpr()
+        }
+        .build()
+
+    companion object {
+        fun fromProto(pb: QueryPb.ConstraintExpr.Not) = Not(ConstraintExpr.fromProto(pb.expr))
+    }
+}
+
+sealed class ConstraintType {
+    fun extendProto(pb:  QueryPb.ConstraintExpr.Constraint.Builder) = pb.also {
+        when (this) {
+            is Range -> it.range = toProto()
+            is Relation -> it.relation = toProto()
+            is Set -> it.set = toProto()
+            is Distance -> it.distance = toProto()
+        }
+    }
+
+    companion object {
+        fun fromProto(obj: QueryPb.ConstraintExpr.Constraint): ConstraintType = when {
+            obj.hasSet()      -> Set.fromProto(obj.set)
+            obj.hasRange()    -> Range.fromProto(obj.range)
+            obj.hasRelation() -> Relation.fromProto(obj.relation)
+            obj.hasDistance() -> Distance.fromProto(obj.distance)
+            else -> {
+                throw UnknownTypeException("Unknown Constraint!")
+            }
+        }
+    }
+}
 
 sealed class Range : ConstraintType() {
-    data class StringPair(val first: String, val second: String) : Range()
-    data class IntPair   (val first: Long,   val second: Long  ) : Range()
-    data class DoublePair(val first: Double, val second: Double) : Range()
+    data class StringPair  (val first: String,   val second: String)   : Range()
+    data class IntPair     (val first: Long,     val second: Long  )   : Range()
+    data class DoublePair  (val first: Double,   val second: Double)   : Range()
+    data class LocationPair(val first: Location, val second: Location) : Range()
 
     fun toProto(): QueryPb.Range = QueryPb.Range.newBuilder()
         .also {
             when(this){
-                is StringPair -> it.setS(QueryPb.StringPair.newBuilder().also {sp->
+                is StringPair   -> it.setS(QueryPb.StringPair.newBuilder().also {sp->
                     sp.first  = first
                     sp.second = second
                 })
-                is IntPair    -> it.setI(QueryPb.IntPair.newBuilder().also {ip->
+                is IntPair      -> it.setI(QueryPb.IntPair.newBuilder().also {ip->
                     ip.first  = first
                     ip.second = second
                 })
-                is DoublePair -> it.setD(QueryPb.DoublePair.newBuilder().also {dp->
+                is DoublePair   -> it.setD(QueryPb.DoublePair.newBuilder().also {dp->
                     dp.first  = first
                     dp.second = second
+                })
+                is LocationPair -> it.setL(QueryPb.LocationPair.newBuilder().also { lp->
+                    lp.first = first.toProto()
+                    lp.second = second.toProto()
                 })
             }
         }
@@ -104,16 +141,18 @@ sealed class Range : ConstraintType() {
             obj.hasS() -> StringPair(obj.s.first, obj.s.second)
             obj.hasI() -> IntPair   (obj.i.first, obj.i.second)
             obj.hasD() -> DoublePair(obj.d.first, obj.d.second)
+            obj.hasL() -> LocationPair(Location.fromProto(obj.l.first), Location.fromProto(obj.l.second))
             else -> {
                 throw UnknownTypeException("Unexpected Range type! ")
             }
         }
         fun <T> fromKotlinType(first: T, second: T) = when(first) {
-            is Int    -> IntPair(first.toLong(), (second as Int).toLong())
-            is Long   -> IntPair(first, second as Long)
-            is String -> StringPair(first, second as String)
-            is Double -> DoublePair(first, second as Double)
-            is Float  -> DoublePair(first.toDouble(), (second as Float).toDouble())
+            is Int      -> IntPair(first.toLong(), (second as Int).toLong())
+            is Long     -> IntPair(first, second as Long)
+            is String   -> StringPair(first, second as String)
+            is Double   -> DoublePair(first, second as Double)
+            is Float    -> DoublePair(first.toDouble(), (second as Float).toDouble())
+            is Location -> LocationPair(first, second as Location)
             else -> {
                 throw UnknownTypeException("Unsupported Range type!")
             }
@@ -121,7 +160,6 @@ sealed class Range : ConstraintType() {
     }
 }
 fun <T> createRange(first: T, second: T): Range = Range.fromKotlinType(first, second)
-
 
 sealed class Relation (val value: Value) : ConstraintType() {
 
@@ -168,18 +206,20 @@ sealed class Set (
     protected val operation: QueryPb.Set.Operator
 ) : ConstraintType() {
     protected sealed class Values {
-        data class Ints   (val values: List<Long>)    : Values()
-        data class Doubles(val values: List<Double>)  : Values()
-        data class Strings(val values: List<String>)  : Values()
-        data class Bools  (val values: List<Boolean>) : Values()
+        data class Ints     (val values: List<Long>)     : Values()
+        data class Doubles  (val values: List<Double>)   : Values()
+        data class Strings  (val values: List<String>)   : Values()
+        data class Bools    (val values: List<Boolean>)  : Values()
+        data class Locations(val values: List<Location>) : Values()
 
         fun toProto(): QueryPb.Set.Values = QueryPb.Set.Values.newBuilder()
             .also {
                 when (this) {
-                    is Ints    -> it.i = QueryPb.Set.Values.Ints.newBuilder().addAllVals(values).build()
-                    is Doubles -> it.d = QueryPb.Set.Values.Doubles.newBuilder().addAllVals(values).build()
-                    is Strings -> it.s = QueryPb.Set.Values.Strings.newBuilder().addAllVals(values).build()
-                    is Bools   -> it.b = QueryPb.Set.Values.Bools.newBuilder().addAllVals(values).build()
+                    is Ints      -> it.i = QueryPb.Set.Values.Ints.newBuilder().addAllVals(values).build()
+                    is Doubles   -> it.d = QueryPb.Set.Values.Doubles.newBuilder().addAllVals(values).build()
+                    is Strings   -> it.s = QueryPb.Set.Values.Strings.newBuilder().addAllVals(values).build()
+                    is Bools     -> it.b = QueryPb.Set.Values.Bools.newBuilder().addAllVals(values).build()
+                    is Locations -> it.l = QueryPb.Set.Values.Locations.newBuilder().addAllVals(values.map { it.toProto() }).build()
                 }
             }
             .build()
@@ -190,6 +230,7 @@ sealed class Set (
                 obj.hasD() -> Doubles(obj.d.valsList)
                 obj.hasS() -> Strings(obj.s.valsList)
                 obj.hasB() -> Bools(obj.b.valsList)
+                obj.hasL() -> Locations(obj.l.valsList.map { Location.fromProto(it) })
                 else -> {
                     throw UnknownTypeException("Values type not supported!")
                 }
@@ -197,12 +238,13 @@ sealed class Set (
             internal fun <T> fromKotlinType(values: List<T>): Values {
                 val v0: T = values[0]
                 return when(v0) {
-                    is Int     -> Ints   (values.map { (it as Int).toLong() })
-                    is Long    -> Ints   (values.map { it as Long})
-                    is Double  -> Doubles(values.map { it as Double })
-                    is Float   -> Doubles(values.map { (it as Float).toDouble() })
-                    is String  -> Strings(values.map { it as String })
-                    is Boolean -> Bools  (values.map { it as Boolean })
+                    is Int      -> Ints     (values.map { (it as Int).toLong() })
+                    is Long     -> Ints     (values.map { it as Long})
+                    is Double   -> Doubles  (values.map { it as Double })
+                    is Float    -> Doubles  (values.map { (it as Float).toDouble() })
+                    is String   -> Strings  (values.map { it as String })
+                    is Boolean  -> Bools    (values.map { it as Boolean })
+                    is Location -> Locations(values.map { it as Location })
                     else -> {
                         throw UnknownTypeException("Type not supported!")
                     }
@@ -235,28 +277,41 @@ sealed class Set (
 
 }
 
-class Constraint (
-    private var attributeSchema: AttributeSchema,
-    private var constraint: ConstraintType
-)  {
-
-
-    fun toProto(): QueryPb.Constraint = QueryPb.Constraint.newBuilder()
-        .setAttribute(attributeSchema.toProto())
-        .setConstraint(constraint.toProtoConstraintType())
-        .build()
+data class Distance (
+    val center: Location,
+    val distance: Double
+) : ConstraintType() {
+    fun toProto(): QueryPb.Distance = QueryPb.Distance.newBuilder().also {
+        it.center = center.toProto()
+        it.distance = distance
+    }.build()
 
     companion object {
-        fun fromProto(obj: QueryOuterClass.Query.Constraint) = Constraint(
-            AttributeSchema().apply{ fromProto(obj.attribute) },
-            ConstraintType.fromProto(obj.constraint)
+        fun fromProto(pb: QueryPb.Distance) = Distance(Location.fromProto(pb.center), pb.distance)
+    }
+}
+
+
+class Constraint (
+    val attributeName: String,
+    val constraint: ConstraintType
+): ConstraintExpr() {
+    fun toProto(): QueryPb.ConstraintExpr.Constraint = QueryPb.ConstraintExpr.Constraint.newBuilder()
+        .also {
+            it.attributeName = attributeName
+            constraint.extendProto(it)
+        }.build()
+
+    companion object {
+        fun fromProto(pb: QueryPb.ConstraintExpr.Constraint): Constraint = Constraint(
+            pb.attributeName,
+            ConstraintType.fromProto(pb)
         )
     }
-
 }
 
 class Query (
-    private val constraints: List<Constraint>,
+    private val constraints: List<ConstraintExpr>,
     private val model: DataModel? = null
 ) {
 
@@ -264,7 +319,7 @@ class Query (
 
     companion object {
         fun fromProto(obj: QueryPb.Model): Query = Query(
-            obj.constraintsList.map { Constraint.fromProto(it) },
+            obj.constraintsList.map { ConstraintExpr.fromProto(it) },
             if (obj.hasModel())  DataModel().apply{fromProto(obj.model)} else null
         )
     }
@@ -273,7 +328,7 @@ class Query (
         .also {
             model?.let { m -> it.setModel(m.toProto()) }
             constraints.forEach { c ->
-                it.addConstraints(c.toProto())
+                it.addConstraints(c.toProtoConstraintExpr())
             }
         }
         .build()
