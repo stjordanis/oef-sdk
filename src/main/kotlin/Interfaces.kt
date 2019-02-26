@@ -36,7 +36,8 @@ internal interface ProtobufSerializable <T> {
  */
 
 interface OEFCommunicationErrorHandlerInterface {
-    fun onError(operation: AgentOuterClass.Server.AgentMessage.Error.Operation, dialogueId: Int, messageId: Int)
+    fun onOEFError(messageId: Int, error: OEFError)
+    fun onDialougeError(messageId: Int, dialogueId: Int)
 }
 
 interface OEFDelayInterface {
@@ -53,13 +54,13 @@ interface OEFConnectionInterface : Closeable {
 }
 
 interface OEFAgentRegisterInterface {
-    fun registerAgent(agentDescription: Description)
-    fun unregisterAgent()
+    fun registerAgent(messageId: Int, agentDescription: Description)
+    fun unregisterAgent(messageId: Int)
 }
 
 interface OEFServiceRegisterInterface {
-    fun registerService(serviceDescription: Description)
-    fun unregisterService(serviceDescription: Description)
+    fun registerService(messageId: Int, serviceDescription: Description)
+    fun unregisterService(messageId: Int, serviceDescription: Description)
 }
 
 interface OEFSearchInterface {
@@ -141,19 +142,19 @@ fun proposalsFrom(vararg proposals: Description) = Proposals.TDescriptions(propo
 fun proposalsFrom(bytes: ByteBuffer)             = Proposals.TBytes(bytes)
 
 interface AgentMessageEmmiterInterface {
-    fun sendMessage(dialogueId: Int, destination: String, message: ByteBuffer)
-    fun sendCFP    (dialogueId: Int, destination: String, query: CFPQuery, messageId: Int = 1, target: Int = 0)
-    fun sendPropose(dialogueId: Int, destination: String, proposals: Proposals, messageId: Int, target: Int? = null)
-    fun sendAccept (dialogueId: Int, destination: String, messageId: Int, target: Int? = null)
-    fun sendDecline(dialogueId: Int, destination: String, messageId: Int, target: Int? = null)
+    fun sendMessage(messageId: Int, dialogueId: Int, destination: String, message: ByteBuffer)
+    fun sendCFP    (messageId: Int, dialogueId: Int, destination: String, target: Int, query: CFPQuery)
+    fun sendPropose(messageId: Int, dialogueId: Int, destination: String, target: Int, proposals: Proposals)
+    fun sendAccept (messageId: Int, dialogueId: Int, destination: String, target: Int)
+    fun sendDecline(messageId: Int, dialogueId: Int, destination: String, target: Int)
 }
 
 interface AgentMessageHandlerInterface {
-    fun onMessage(dialogueId: Int, origin: String, content: ByteBuffer)
-    fun onCFP    (dialogueId: Int, origin: String, messageId: Int, target: Int, query: CFPQuery)
-    fun onPropose(dialogueId: Int, origin: String, messageId: Int, target: Int, proposals: Proposals)
-    fun onAccept (dialogueId: Int, origin: String, messageId: Int, target: Int)
-    fun onDecline(dialogueId: Int, origin: String, messageId: Int, target: Int)
+    fun onMessage(answerId: Int, dialogueId: Int, origin: String, content: ByteBuffer)
+    fun onCFP    (answerId: Int, dialogueId: Int, origin: String, target: Int, query: CFPQuery)
+    fun onPropose(answerId: Int, dialogueId: Int, origin: String, target: Int, proposals: Proposals)
+    fun onAccept (answerId: Int, dialogueId: Int, origin: String, target: Int)
+    fun onDecline(answerId: Int, dialogueId: Int, origin: String, target: Int)
 }
 
 interface OEFProxyInterface :

@@ -32,31 +32,31 @@ class WeatherClient (
         val log by logger()
     }
 
-    override fun onError(
-        operation: AgentOuterClass.Server.AgentMessage.Error.Operation,
-        dialogueId: Int,
-        messageId: Int
-    ) {
+    override fun onOEFError(messageId: Int, error: OEFError) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onDialougeError(messageId: Int, dialogueId: Int) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun onSearchResult(searchId: Int, agents: List<String>) {
         log.info("Found agents: $agents, sending cfps...")
         for(agent in agents){
-            sendCFP(0, agent, cfpQueryFrom(Query()))
+            sendCFP(1, 0, agent, 0, cfpQueryFrom(Query()))
         }
     }
 
-    override fun onMessage(dialogueId: Int, origin: String, content: ByteBuffer) {
-       val data = messageCoder.decode(content).toString()
+    override fun onMessage(answerId: Int, dialogueId: Int, origin: String, content: ByteBuffer) {
+        val data = messageCoder.decode(content).toString()
         log.info("Received message from $origin. Message: $data")
     }
 
-    override fun onCFP(dialogueId: Int, origin: String, messageId: Int, target: Int, query: CFPQuery) {
+    override fun onCFP(answerId: Int, dialogueId: Int, origin: String, target: Int, query: CFPQuery) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun onPropose(dialogueId: Int, origin: String, messageId: Int, target: Int, proposals: Proposals) {
+    override fun onPropose(answerId: Int, dialogueId: Int, origin: String, target: Int, proposals: Proposals) {
         log.info("Received propose from agent $origin")
         proposals as Proposals.TDescriptions
         for (i in 0 until proposals.value.size) {
@@ -65,14 +65,14 @@ class WeatherClient (
             }
         }
         log.info("Accepting proposal")
-        sendAccept(dialogueId, origin, messageId+1, messageId)
+        sendAccept(answerId, dialogueId, origin, answerId+1)
     }
 
-    override fun onAccept(dialogueId: Int, origin: String, messageId: Int, target: Int) {
+    override fun onAccept(answerId: Int, dialogueId: Int, origin: String, target: Int) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun onDecline(dialogueId: Int, origin: String, messageId: Int, target: Int) {
+    override fun onDecline(answerId: Int, dialogueId: Int, origin: String, target: Int) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
@@ -83,9 +83,9 @@ fun main(args: Array<String>)  = runBlocking<Unit> {
 
     val query = Query(
         listOf(
-            Constraint(WeatherAttr.Temperature, Relation.EQ(true)),
-            Constraint(WeatherAttr.AirPressure, Relation.EQ(true)),
-            Constraint(WeatherAttr.Humidity,    Relation.EQ(true))
+            Constraint(WeatherAttr.Temperature.name, Relation.EQ(true)),
+            Constraint(WeatherAttr.AirPressure.name, Relation.EQ(true)),
+            Constraint(WeatherAttr.Humidity.name,    Relation.EQ(true))
         ),
         WeatherDataModel
     )

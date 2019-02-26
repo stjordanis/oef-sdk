@@ -37,6 +37,6 @@ abstract class Agent (
 abstract class OEFAgent (
     publicKey: String,
     oefAddress: String,
-    port: Int = DEFAULT_OEF_PORT,
+    port: Int,
     handlerContext: CoroutineContext? = null
 ) : Agent(OEFNetworkProxy(publicKey, oefAddress, port, handlerContext))

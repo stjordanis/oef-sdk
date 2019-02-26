@@ -20,7 +20,6 @@ import org.junit.jupiter.api.TestInstance
 import assertk.assert
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
-import fetch.oef.pb.AgentOuterClass
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.nio.ByteBuffer
@@ -34,18 +33,18 @@ class TestOEFProxy {
 
     @Test
     fun connect() {
-        val proxy = OEFNetworkProxy("12345", "127.0.0.1")
+        val proxy = OEFNetworkProxy("12345", "127.0.0.1", 3333)
         assert(proxy.connect()).isTrue()
         proxy.stop()
     }
 
     class LogAgent(proxy: OEFProxy, private val foundAgents: MutableList<String>?=null) : Agent(proxy) {
-        override fun onError(
-            operation: AgentOuterClass.Server.AgentMessage.Error.Operation,
-            dialogueId: Int,
-            messageId: Int
-        ) {
-            log.error("Error: dialogueId=$dialogueId, messageId=$messageId, operation=${operation.name}")
+        override fun onOEFError(messageId: Int, error: OEFError) {
+            log.error("Error: messageId=$messageId, operation=${error.name}")
+        }
+
+        override fun onDialougeError(messageId: Int, dialogueId: Int) {
+            log.error("Error: dialogueId=$dialogueId, messageId=$messageId")
         }
 
         override fun onSearchResult(searchId: Int, agents: List<String>) {
@@ -53,41 +52,41 @@ class TestOEFProxy {
             foundAgents?.addAll(0, agents)
         }
 
-        override fun onMessage(dialogueId: Int, origin: String, content: ByteBuffer) {
+        override fun onMessage(answerId: Int, dialogueId: Int, origin: String, content: ByteBuffer) {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 
-        override fun onCFP(dialogueId: Int, origin: String, messageId: Int, target: Int, query: CFPQuery) {
+        override fun onCFP(answerId: Int, dialogueId: Int, origin: String, target: Int, query: CFPQuery) {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 
-        override fun onPropose(dialogueId: Int, origin: String, messageId: Int, target: Int, proposals: Proposals) {
+        override fun onPropose(answerId: Int, dialogueId: Int, origin: String, target: Int, proposals: Proposals) {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 
-        override fun onAccept(dialogueId: Int, origin: String, messageId: Int, target: Int) {
+        override fun onAccept(answerId: Int, dialogueId: Int, origin: String, target: Int) {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 
-        override fun onDecline(dialogueId: Int, origin: String, messageId: Int, target: Int) {
+        override fun onDecline(answerId: Int, dialogueId: Int, origin: String, target: Int) {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
     }
 
     @Test
     fun `Register agent with OEF node`() = runBlocking {
-        val proxy = OEFNetworkProxy("123456", "127.0.0.1")
+        val proxy = OEFNetworkProxy("123456", "127.0.0.1", 3333)
         val agent = LogAgent(proxy)
         assert(agent.connect()).isTrue()
 
-        agent.registerAgent(Description())
+        agent.registerAgent(0, Description())
 
-        val proxy2 = OEFNetworkProxy("1234567", "127.0.0.1")
+        val proxy2 = OEFNetworkProxy("1234567", "127.0.0.1", 3333)
         val foundAgents = mutableListOf<String>()
         val agent2 = LogAgent(proxy2,foundAgents)
         assert(agent2.connect()).isTrue()
 
-        agent.registerAgent(Description())
+        agent.registerAgent(0, Description())
         agent2.searchAgents(1, Query())
 
         delay(1000)
@@ -96,8 +95,8 @@ class TestOEFProxy {
             it=="123456"
         }).isNotNull()
 
-        agent.unregisterAgent()
-        agent2.unregisterAgent()
+        agent.unregisterAgent(1)
+        agent2.unregisterAgent(1)
 
         agent.close()
         agent2.close()

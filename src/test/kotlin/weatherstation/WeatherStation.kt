@@ -40,11 +40,12 @@ class WeatherStation (
             WeatherDataModel
         )
     }
-    override fun onError(
-        operation: AgentOuterClass.Server.AgentMessage.Error.Operation,
-        dialogueId: Int,
-        messageId: Int
-    ) {
+
+    override fun onOEFError(messageId: Int, error: OEFError) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onDialougeError(messageId: Int, dialogueId: Int) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -52,33 +53,33 @@ class WeatherStation (
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun onMessage(dialogueId: Int, origin: String, content: ByteBuffer) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun onCFP(dialogueId: Int, origin: String, messageId: Int, target: Int, query: CFPQuery) {
+    override fun onCFP(answerId: Int, dialogueId: Int, origin: String, target: Int, query: CFPQuery) {
         log.info("Received CFP from $origin")
 
         val description = descriptionOf(descriptionPair("price", 50))
         val proposals   = proposalsFrom(description)
 
-        sendPropose(dialogueId, origin, proposals, messageId+1, target+1)
+        sendPropose(answerId+1, dialogueId, origin, target+1,  proposals)
     }
 
-    override fun onPropose(dialogueId: Int, origin: String, messageId: Int, target: Int, proposals: Proposals) {
+    override fun onPropose(answerId: Int, dialogueId: Int, origin: String, target: Int, proposals: Proposals) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun onAccept(dialogueId: Int, origin: String, messageId: Int, target: Int) {
+    override fun onAccept(answerId: Int, dialogueId: Int, origin: String, target: Int) {
         log.info("Received accept from $origin")
 
-        sendMessage(dialogueId, origin, messageCoder.encode("temperature: 15.0"))
-        sendMessage(dialogueId, origin, messageCoder.encode("humidity: 0.7"))
-        sendMessage(dialogueId, origin, messageCoder.encode("air_pressure: 1019.0"))
+        sendMessage(answerId+1, dialogueId, origin, messageCoder.encode("temperature: 15.0"))
+        sendMessage(answerId+1, dialogueId, origin, messageCoder.encode("humidity: 0.7"))
+        sendMessage(answerId+1, dialogueId, origin, messageCoder.encode("air_pressure: 1019.0"))
     }
 
-    override fun onDecline(dialogueId: Int, origin: String, messageId: Int, target: Int) {
-        log.info("Received decline from $origin")
+    override fun onDecline(answerId: Int, dialogueId: Int, origin: String, target: Int) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onMessage(answerId: Int, dialogueId: Int, origin: String, content: ByteBuffer) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
 
@@ -86,7 +87,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val agent = WeatherStation("weather_station", "127.0.0.1", 3333)
     agent.connect()
 
-    agent.registerService(WeatherStation.weatherServiceDescription)
+    agent.registerService(0, WeatherStation.weatherServiceDescription)
 
     Runtime.getRuntime().addShutdownHook(Thread {
         agent.stop()

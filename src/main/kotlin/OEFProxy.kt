@@ -62,31 +62,28 @@ abstract class OEFProxy (
         }
         val msg = AgentOuterClass.Server.AgentMessage.parseFrom(data)
         when(msg.payloadCase) {
-            PayloadCase.AGENTS -> msg.agents?.run {
-                agent.onSearchResult(searchId, agentsList)
+            PayloadCase.OEF_ERROR -> msg.oefError?.run {
+                agent.onOEFError(msg.answerId, OEFError.fromProto(this))
             }
-            PayloadCase.ERROR -> msg.error?.run {
-                agent.onError(operation, dialogueId, msgId)
+            PayloadCase.DIALOGUE_ERROR -> msg.dialogueError?.run {
+                agent.onDialougeError(msg.answerId, dialogueId)
+            }
+            PayloadCase.AGENTS -> msg.agents?.run {
+                agent.onSearchResult(msg.answerId, agentsList)
             }
             PayloadCase.CONTENT -> msg.content?.run {
                 when (payloadCase) {
-                    ContentPayloadCase.CONTENT -> agent.onMessage(dialogueId, origin, content.asReadOnlyByteBuffer())
+                    ContentPayloadCase.CONTENT -> agent.onMessage(msg.answerId, dialogueId, origin, content.asReadOnlyByteBuffer())
                     ContentPayloadCase.FIPA -> fipa?.let { fipa ->
                         when (fipa.msgCase) {
                             MsgCase.CFP -> fipa.cfp?.let { cfp ->
-                                agent.onCFP(dialogueId, origin, fipa.msgId, fipa.target, CFPQuery.fromProto(cfp))
+                                agent.onCFP(msg.answerId, dialogueId, origin, fipa.target, CFPQuery.fromProto(cfp))
                             }
                             MsgCase.PROPOSE -> fipa.propose?.let { propose ->
-                                agent.onPropose(
-                                    dialogueId,
-                                    origin,
-                                    fipa.msgId,
-                                    fipa.target,
-                                    Proposals.fromProto(propose)
-                                )
+                                agent.onPropose(msg.answerId, dialogueId, origin, fipa.target, Proposals.fromProto(propose))
                             }
-                            MsgCase.ACCEPT -> agent.onAccept(dialogueId, origin, fipa.msgId, fipa.target)
-                            MsgCase.DECLINE -> agent.onDecline(dialogueId, origin, fipa.msgId, fipa.target)
+                            MsgCase.ACCEPT -> agent.onAccept(msg.answerId, dialogueId, origin, fipa.target)
+                            MsgCase.DECLINE -> agent.onDecline(msg.answerId, dialogueId, origin, fipa.target)
                             else -> {
                                 log.warn("Not implemented yet: fipa ${fipa.msgCase.name}")
                             }
