@@ -78,14 +78,19 @@ class WeatherClient (
 }
 
 fun main(args: Array<String>)  = runBlocking<Unit> {
-    val agent = WeatherClient("weather_client", "127.0.0.1", 3333)
-    agent.connect()
+    val agent = WeatherClient("weather_client2", "127.0.0.1", 10000)
+
+    if (!agent.connect()){
+        return@runBlocking
+    }
 
     val query = Query(
         listOf(
-            Constraint(WeatherAttr.Temperature.name, Relation.EQ(true)),
+           /* Constraint(WeatherAttr.Temperature.name, Relation.EQ(true)),
+
             Constraint(WeatherAttr.AirPressure.name, Relation.EQ(true)),
-            Constraint(WeatherAttr.Humidity.name,    Relation.EQ(true))
+            Constraint(WeatherAttr.Humidity.name,    Relation.EQ(true))*/
+            Constraint("location", Distance(Location(435.4, 425.3), 20000.0))
         ),
         WeatherDataModel
     )

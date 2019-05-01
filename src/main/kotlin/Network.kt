@@ -20,12 +20,15 @@ import fetch.oef.pb.AgentOuterClass
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.lang.Exception
+import java.net.ConnectException
 import java.net.InetSocketAddress
 import java.net.SocketAddress
+import java.nio.BufferUnderflowException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.AsynchronousCloseException
 import java.nio.channels.AsynchronousSocketChannel
+import java.nio.channels.ClosedChannelException
 import java.nio.channels.CompletionHandler
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
@@ -120,20 +123,26 @@ class OEFNetworkProxy(
         sizeBuffer.putInt(data.serializedSize)
         sizeBuffer.flip()
         socketChannel.aWriteFullBuffer(sizeBuffer)
-        log.info("sending data of size: ${data.serializedSize}")
+        log.info("sending data of size: ${data.serializedSize}; $data")
         val byteBuffer: ByteBuffer = ByteBuffer.wrap(data.toByteArray())
         socketChannel.aWriteFullBuffer(byteBuffer)
     }
 
     private suspend fun receive(): ByteBuffer {
-        val sizeBuffer = ByteBuffer.allocate(OEFNetworkProxy.INT_SIZE).order(ByteOrder.LITTLE_ENDIAN)
-        socketChannel.aReadFullBuffer(sizeBuffer)
-        sizeBuffer.flip()
-        val size = sizeBuffer.int
-        val buffer = ByteBuffer.allocate(size)
-        socketChannel.aReadFullBuffer(buffer)
-        buffer.flip()
-        return buffer
+        val sizeBuffer = ByteBuffer.allocate(INT_SIZE).order(ByteOrder.LITTLE_ENDIAN)
+        try {
+            socketChannel.aReadFullBuffer(sizeBuffer)
+            sizeBuffer.flip()
+            val size = sizeBuffer.int
+            if (size==0) throw ClosedChannelException()
+            log.info("Red size: $size")
+            val buffer = ByteBuffer.allocate(size)
+            socketChannel.aReadFullBuffer(buffer)
+            buffer.flip()
+            return buffer
+        } catch (e: BufferUnderflowException) {
+            throw ClosedChannelException()
+        }
     }
 
     private suspend fun handShake(): Boolean {
@@ -161,29 +170,45 @@ class OEFNetworkProxy(
         while (isActive) {
             try {
                 val data = receive()
+                log.info("Got data: $data")
                 launch(handlerContext as CoroutineContext) {
+                    log.info("before processMessage")
                     processMessage(data)
                 }
             }
-            catch (e: CancellationException){}
+            catch (e: CancellationException) {}
+            catch (e: ClosedChannelException){
+                log.warn("Connection with remote OEF-CORE dropped!")
+                break
+            }
             catch (e: Throwable) {
                 log.warn("Exception in socket read loop!", e)
+                break
             }
         }
     }
 
     private suspend fun writeIOLoop() {
         for (msg in messageChannel) {
-            send(msg)
+            try {
+                send(msg)
+            } catch (e: ClosedChannelException){
+                break
+            }
         }
     }
 
     override fun connect(): Boolean = runBlocking {
         try {
+            log.info("Connect to OEF @ $oefAddress:$port")
             socketChannel.aConnect(InetSocketAddress(oefAddress, port))
             socketChannel.remoteAddress ?: return@runBlocking false
+        } catch (e: ConnectException) {
+            log.warn("Failed to establish network connection!")
+            stop()
+            return@runBlocking false
         } catch (e: Exception) {
-            log.warn("Failed to establish network connection! ", e)
+            log.warn("Failed to establish network connection!", e)
             return@runBlocking false
         }
         val connectionStatus = try {
@@ -195,9 +220,11 @@ class OEFNetworkProxy(
         if (connectionStatus) {
             launch(context){
                 readIOLoop()
+                stop()
             }
             launch(context){
                 writeIOLoop()
+                stop()
             }
         }
         return@runBlocking connectionStatus
@@ -205,14 +232,19 @@ class OEFNetworkProxy(
     }
 
     override fun stop() {
-        messageChannel.close()
+        log.info("Stopping...")
+        try {
+            messageChannel.close()
+        } catch (e: Exception){ }
         context.cancelChildren()
         context.cancel()
         if (!providedContext) {
             handlerContext?.cancelChildren()
             handlerContext?.cancel()
         }
-        socketChannel.close()
+        try {
+            socketChannel.close()
+        } catch (e: Exception) {}
     }
 
     override suspend fun delayUntilStopped() {

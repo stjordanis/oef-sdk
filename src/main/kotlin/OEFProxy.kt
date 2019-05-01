@@ -71,6 +71,9 @@ abstract class OEFProxy (
             PayloadCase.AGENTS -> msg.agents?.run {
                 agent.onSearchResult(msg.answerId, agentsList)
             }
+            PayloadCase.AGENTS_WIDE -> msg.agentsWide?.run {
+                log.warn(this)
+            }
             PayloadCase.CONTENT -> msg.content?.run {
                 when (payloadCase) {
                     ContentPayloadCase.CONTENT -> agent.onMessage(msg.answerId, dialogueId, origin, content.asReadOnlyByteBuffer())

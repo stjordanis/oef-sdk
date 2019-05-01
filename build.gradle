@@ -1,13 +1,14 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version "1.3.20"
+    id 'com.gradle.build-scan' version '1.16'
+    id 'org.jetbrains.kotlin.jvm' version "1.3.31"
     id "com.google.protobuf" version "0.8.7"
     id "java"
     id 'idea'
     id 'java-library'
 }
 
-group 'fetch.oef.sdk.kotlin'
-version '0.0'
+group 'ai.fetch.oef.sdk'
+version '0.1'
 
 
 repositories {
@@ -15,7 +16,7 @@ repositories {
 }
 
 project.ext {
-    kotlin_version = '1.3.20'
+    kotlin_version = '1.3.31'
 }
 
 dependencies {
@@ -54,4 +55,11 @@ protobuf {
 
 test {
     useJUnitPlatform()
+}
+
+buildScan {
+    termsOfServiceUrl = "https://gradle.com/terms-of-service"
+    termsOfServiceAgree = "yes"
+
+    publishAlways()
 }

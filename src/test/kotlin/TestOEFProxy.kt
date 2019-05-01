@@ -29,11 +29,13 @@ class TestOEFProxy {
 
     companion object {
         val log by logger()
+        val core_ip: String = "127.0.0.1"
+        val core_port: Int = 10000
     }
 
     @Test
     fun connect() {
-        val proxy = OEFNetworkProxy("12345", "127.0.0.1", 3333)
+        val proxy = OEFNetworkProxy("12345", core_ip, core_port)
         assert(proxy.connect()).isTrue()
         proxy.stop()
     }
@@ -75,21 +77,35 @@ class TestOEFProxy {
 
     @Test
     fun `Register agent with OEF node`() = runBlocking {
-        val proxy = OEFNetworkProxy("123456", "127.0.0.1", 3333)
+        val proxy = OEFNetworkProxy("123456", core_ip, core_port)
         val agent = LogAgent(proxy)
         assert(agent.connect()).isTrue()
 
-        agent.registerAgent(0, Description())
+        val mouseSpeed = AttributeSchema("mouse_speed",   AttributeType.BOOL, true, "Weather book mouse")
+        val mouseDataModel = DataModel(
+            "mouse_data",
+            listOf(mouseSpeed),
+            "Experimental mouse data, who read books and tells the weather"
+        )
+        val mouseServiceDescription = Description(
+            listOf(
+                descriptionPair("mouse_speed", false)
+            ),
+            mouseDataModel
+        )
 
-        val proxy2 = OEFNetworkProxy("1234567", "127.0.0.1", 3333)
+        agent.registerAgent(0, mouseServiceDescription)
+        delay(1000)
+
+        val proxy2 = OEFNetworkProxy("1234567", core_ip, core_port)
         val foundAgents = mutableListOf<String>()
         val agent2 = LogAgent(proxy2,foundAgents)
         assert(agent2.connect()).isTrue()
 
-        agent.registerAgent(0, Description())
-        agent2.searchAgents(1, Query())
+        agent2.searchAgents(1, Query(listOf<Constraint>(), mouseDataModel))
 
-        delay(1000)
+        delay(2000)
+        println(foundAgents)
 
         assert(foundAgents.find {
             it=="123456"
