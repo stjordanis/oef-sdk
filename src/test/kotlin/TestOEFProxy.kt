@@ -45,13 +45,17 @@ class TestOEFProxy {
             log.error("Error: messageId=$messageId, operation=${error.name}")
         }
 
-        override fun onDialougeError(messageId: Int, dialogueId: Int) {
+        override fun onDialogueError(messageId: Int, dialogueId: Int) {
             log.error("Error: dialogueId=$dialogueId, messageId=$messageId")
         }
 
         override fun onSearchResult(searchId: Int, agents: List<String>) {
             log.info("Got search result: searchId: $searchId, agents: ${agents.size}")
             foundAgents?.addAll(0, agents)
+        }
+
+        override fun onSearchResultWide(searchId: Int, result: List<SearchResultItem>) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 
         override fun onMessage(answerId: Int, dialogueId: Int, origin: String, content: ByteBuffer) {

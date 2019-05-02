@@ -37,7 +37,7 @@ internal interface ProtobufSerializable <T> {
 
 interface OEFCommunicationErrorHandlerInterface {
     fun onOEFError(messageId: Int, error: OEFError)
-    fun onDialougeError(messageId: Int, dialogueId: Int)
+    fun onDialogueError(messageId: Int, dialogueId: Int)
 }
 
 interface OEFDelayInterface {
@@ -66,10 +66,27 @@ interface OEFServiceRegisterInterface {
 interface OEFSearchInterface {
     fun searchAgents(searchId: Int, query: Query)
     fun searchServices(searchId: Int, query: Query)
+    fun searchSericesWide(searchId: Int, query: Query)
 }
 
 interface OEFSearchHandlerInterface {
     fun onSearchResult(searchId: Int, agents: List<String>)
+    fun onSearchResultWide(searchId: Int, result: List<SearchResultItem>)
+}
+
+
+data class SearchResultItem(
+    val key: String,
+    val uri: String,
+    val distance: Double,
+    val info: String,
+    val agents: List<AgentInfo>
+
+) {
+    data class AgentInfo(
+        val key: String,
+        val score: Double
+    )
 }
 
 

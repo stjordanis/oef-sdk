@@ -144,6 +144,25 @@ class SearchServices (
         .build()
 }
 
+/**
+ * This message is used for searching agents in OEF Network.
+ * It contains:
+ *  - a search id, that identifies the search query. This id will be used by the sender
+ *    in order to distinguish different incoming search results.
+ *  - a query, i.e. a list of constraints defined over a data model.
+ */
+class SearchServicesWide(
+    private val searchId: Int,
+    private val query: Query
+): BaseMessage {
+    override fun toEnvelope(): Envelope = newEnvelopeBuilder(searchId)
+        .setSearchServicesWide(
+            AgentSearch.newBuilder()
+                .setQuery(query.toProto())
+        )
+        .build()
+}
+
 
 /**
  *  This type of message is used for interacting with other agents, via an OEF Node.

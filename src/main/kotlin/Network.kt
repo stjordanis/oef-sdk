@@ -172,7 +172,6 @@ class OEFNetworkProxy(
                 val data = receive()
                 log.info("Got data: $data")
                 launch(handlerContext as CoroutineContext) {
-                    log.info("before processMessage")
                     processMessage(data)
                 }
             }
@@ -293,6 +292,13 @@ class OEFNetworkProxy(
      */
     override fun searchServices(searchId: Int, query: Query) {
         messageChannel.offer(SearchServices(searchId, query).toEnvelope())
+    }
+
+    /**
+     * Wide search on the OEF Network
+     */
+    override fun searchSericesWide(searchId: Int, query: Query) {
+        messageChannel.offer(SearchServicesWide(searchId, query).toEnvelope())
     }
 
     /**

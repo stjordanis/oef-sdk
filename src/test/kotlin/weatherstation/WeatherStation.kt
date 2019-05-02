@@ -42,14 +42,18 @@ class WeatherStation (
     }
 
     override fun onOEFError(messageId: Int, error: OEFError) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        log.error("OEFError: msg_id: $messageId, error: $error")
     }
 
-    override fun onDialougeError(messageId: Int, dialogueId: Int) {
+    override fun onDialogueError(messageId: Int, dialogueId: Int) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun onSearchResult(searchId: Int, agents: List<String>) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onSearchResultWide(searchId: Int, result: List<SearchResultItem>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -84,7 +88,7 @@ class WeatherStation (
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val agent = WeatherStation("weather_station", "127.0.0.1", 3333)
+    val agent = WeatherStation("weather_station", "127.0.0.1", 10000)
     agent.connect()
 
     agent.registerService(0, WeatherStation.weatherServiceDescription)

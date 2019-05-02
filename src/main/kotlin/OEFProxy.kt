@@ -66,13 +66,23 @@ abstract class OEFProxy (
                 agent.onOEFError(msg.answerId, OEFError.fromProto(this))
             }
             PayloadCase.DIALOGUE_ERROR -> msg.dialogueError?.run {
-                agent.onDialougeError(msg.answerId, dialogueId)
+                agent.onDialogueError(msg.answerId, dialogueId)
             }
             PayloadCase.AGENTS -> msg.agents?.run {
                 agent.onSearchResult(msg.answerId, agentsList)
             }
             PayloadCase.AGENTS_WIDE -> msg.agentsWide?.run {
-                log.warn(this)
+                agent.onSearchResultWide(msg.answerId, resultList.map {
+                    SearchResultItem(
+                        it.key.toStringUtf8(),
+                        it.ip+":"+it.port.toString(),
+                        it.distance,
+                        it.info,
+                        it.agentsList.map {a->
+                            SearchResultItem.AgentInfo(a.key.toStringUtf8(), a.score)
+                        }
+                    )
+                })
             }
             PayloadCase.CONTENT -> msg.content?.run {
                 when (payloadCase) {

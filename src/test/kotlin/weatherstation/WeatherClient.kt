@@ -33,11 +33,11 @@ class WeatherClient (
     }
 
     override fun onOEFError(messageId: Int, error: OEFError) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        log.error("OEFError: msg_id: $messageId, error: $error")
     }
 
-    override fun onDialougeError(messageId: Int, dialogueId: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun onDialogueError(messageId: Int, dialogueId: Int) {
+        log.error("Dialogue error: $messageId, $dialogueId")
     }
 
     override fun onSearchResult(searchId: Int, agents: List<String>) {
@@ -45,6 +45,10 @@ class WeatherClient (
         for(agent in agents){
             sendCFP(1, 0, agent, 0, cfpQueryFrom(Query()))
         }
+    }
+
+    override fun onSearchResultWide(searchId: Int, result: List<SearchResultItem>) {
+        log.info("Got wide search result: $result")
     }
 
     override fun onMessage(answerId: Int, dialogueId: Int, origin: String, content: ByteBuffer) {
@@ -86,10 +90,10 @@ fun main(args: Array<String>)  = runBlocking<Unit> {
 
     val query = Query(
         listOf(
-           /* Constraint(WeatherAttr.Temperature.name, Relation.EQ(true)),
+            /*Constraint(WeatherAttr.Temperature.name, Relation.EQ(true)),
 
             Constraint(WeatherAttr.AirPressure.name, Relation.EQ(true)),
-            Constraint(WeatherAttr.Humidity.name,    Relation.EQ(true))*/
+            Constraint(WeatherAttr.Humidity.name,    Relation.EQ(true)),*/
             Constraint("location", Distance(Location(435.4, 425.3), 20000.0))
         ),
         WeatherDataModel
