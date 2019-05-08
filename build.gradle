@@ -5,9 +5,10 @@ plugins {
     id "java"
     id 'idea'
     id 'java-library'
+    id 'maven'
 }
 
-group 'ai.fetch.oef.sdk'
+group 'com.github.uvue-git'
 version '0.1'
 
 
