@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package fetch.oef.sdk.kotlin.weatherstation
+package ai.fetch.oef.weatherstation
 
-import fetch.oef.pb.AgentOuterClass
-import fetch.oef.sdk.kotlin.*
+import ai.fetch.oef.*
 import kotlinx.coroutines.runBlocking
 import java.nio.ByteBuffer
 

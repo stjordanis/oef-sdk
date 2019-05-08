@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package fetch.oef.sdk.kotlin
+package ai.fetch.oef
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -85,7 +85,7 @@ class TestOEFProxy {
         val agent = LogAgent(proxy)
         assert(agent.connect()).isTrue()
 
-        val mouseSpeed = AttributeSchema("mouse_speed",   AttributeType.BOOL, true, "Weather book mouse")
+        val mouseSpeed = AttributeSchema("mouse_speed",   AttributeSchema.Type.BOOL, true, "Weather book mouse")
         val mouseDataModel = DataModel(
             "mouse_data",
             listOf(mouseSpeed),

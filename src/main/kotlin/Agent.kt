@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package fetch.oef.sdk.kotlin
+package ai.fetch.oef
 
 import kotlin.coroutines.CoroutineContext
 
@@ -34,7 +34,7 @@ abstract class Agent (
     }
 }
 
-abstract class OEFAgent (
+abstract class OEFAgent @JvmOverloads constructor(
     publicKey: String,
     oefAddress: String,
     port: Int,

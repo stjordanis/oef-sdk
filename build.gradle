@@ -5,14 +5,15 @@ plugins {
     id "java"
     id 'idea'
     id 'java-library'
-    id 'maven'
+    id 'maven-publish'
 }
 
-group 'com.github.uvue-git'
-version '0.1'
+group 'com.github.fetchai'
+version '0.1.1'
 
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -63,4 +64,15 @@ buildScan {
     termsOfServiceAgree = "yes"
 
     publishAlways()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
 }

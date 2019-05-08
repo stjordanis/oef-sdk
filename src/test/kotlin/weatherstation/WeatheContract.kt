@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package fetch.oef.sdk.kotlin.weatherstation
+package ai.fetch.oef.weatherstation
 
-import fetch.oef.sdk.kotlin.AttributeSchema
-import fetch.oef.sdk.kotlin.AttributeType
-import fetch.oef.sdk.kotlin.DataModel
+import ai.fetch.oef.AttributeSchema
+import ai.fetch.oef.DataModel
 import java.nio.charset.Charset
 
 object WeatherAttr {
 
-    val WindSpeed   = AttributeSchema("wind_speed",   AttributeType.BOOL, true, "Provides wind speed measurements.")
-    val Temperature = AttributeSchema("temperature",  AttributeType.BOOL, true, "Provides temperature measurements.")
-    val AirPressure = AttributeSchema("air_pressure", AttributeType.BOOL, true, "Provides air pressure measurements.")
-    val Humidity    = AttributeSchema("humidity",     AttributeType.BOOL, true, "Provides humidity measurements.")
+    val WindSpeed   = AttributeSchema("wind_speed",   AttributeSchema.Type.BOOL, true, "Provides wind speed measurements.")
+    val Temperature = AttributeSchema("temperature",  AttributeSchema.Type.BOOL, true, "Provides temperature measurements.")
+    val AirPressure = AttributeSchema("air_pressure", AttributeSchema.Type.BOOL, true, "Provides air pressure measurements.")
+    val Humidity    = AttributeSchema("humidity",     AttributeSchema.Type.BOOL, true, "Provides humidity measurements.")
 }
 
 val WeatherDataModel = DataModel(

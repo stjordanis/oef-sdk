@@ -9,7 +9,7 @@
         <Root level="warn">
             <AppenderRef ref="Console"/>
         </Root>
-        <logger name="fetch.oef.sdk.kotlin" level="trace" additivity="false">
+        <logger name="ai.fetch.oef" level="trace" additivity="false">
             <AppenderRef ref="Console" />
         </logger>
     </Loggers>

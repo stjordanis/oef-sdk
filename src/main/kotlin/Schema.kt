@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package fetch.oef.sdk.kotlin
+package ai.fetch.oef
 
 import fetch.oef.pb.AgentOuterClass
 import fetch.oef.pb.QueryOuterClass.Query as QueryPb
 import java.lang.Exception
+import java.util.*
 
 
 /**
@@ -43,25 +44,25 @@ typealias AttributeType = QueryPb.Attribute.Type
  */
 class AttributeSchema(
     name: String,
-    type: AttributeType,
+    type: Type,
     required: Boolean,
     description: String? = null
 ) : ProtobufSerializable<QueryPb.Attribute> {
 
     var name: String = name
         private set
-    var type: AttributeType = type
+    var type: Type = type
         private set
     var required: Boolean = required
         private set
     var description: String?  = description
         private set
 
-    constructor() : this("", AttributeType.INT, true)
+    constructor() : this("", Type.INT, true)
 
     override fun fromProto(obj: QueryPb.Attribute) {
         name        = obj.name
-        type        = obj.type
+        type        = Type.fromAttributeType(obj.type)
         required    = obj.required
         description = when(obj.hasDescription()){
             true  -> obj.description
@@ -71,7 +72,7 @@ class AttributeSchema(
 
     override fun toProto(): QueryPb.Attribute =  QueryPb.Attribute.newBuilder()
         .setName(name)
-        .setType(type)
+        .setType(type.type)
         .setRequired(required)
         .also {builder->
             description?.let{
@@ -84,10 +85,33 @@ class AttributeSchema(
         if (other?.javaClass != javaClass) return false
         other as AttributeSchema
         if (other.name != name) return false
-        if (other.type != type) return false
+        if (other.type.type != type.type) return false
         if (other.required != required) return false
         if (other.description != description) return false
         return true
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hash(name, type.type, required, description)
+    }
+
+    enum class Type (internal val type: AttributeType) {
+        DOUBLE(AttributeType.DOUBLE),
+        INT(AttributeType.INT),
+        BOOL(AttributeType.BOOL),
+        STRING(AttributeType.STRING),
+        LOCATION(AttributeType.LOCATION);
+
+        companion object {
+            @JvmStatic
+            fun fromAttributeType(attributeType: AttributeType) = when (attributeType) {
+                QueryPb.Attribute.Type.DOUBLE -> DOUBLE
+                QueryPb.Attribute.Type.INT -> INT
+                QueryPb.Attribute.Type.BOOL -> BOOL
+                QueryPb.Attribute.Type.STRING -> STRING
+                QueryPb.Attribute.Type.LOCATION -> LOCATION
+            }
+        }
     }
 }
 
@@ -162,6 +186,10 @@ class DataModel(
         }
         return true
     }
+
+    override fun hashCode(): Int {
+        return Objects.hash(name, attributes, description)
+    }
 }
 
 class UnknownTypeException(message: String) : Exception(message)
@@ -228,11 +256,11 @@ sealed class Value {
         .build()
 
     internal fun getAttributeType(): AttributeType = when(this){
-        is Value.INT    -> AttributeType.INT
-        is Value.DOUBLE -> AttributeType.DOUBLE
-        is Value.BOOL   -> AttributeType.BOOL
-        is Value.STRING -> AttributeType.STRING
-        is Value.LOCATION -> AttributeType.LOCATION
+        is INT    -> AttributeType.INT
+        is DOUBLE -> AttributeType.DOUBLE
+        is BOOL   -> AttributeType.BOOL
+        is STRING -> AttributeType.STRING
+        is LOCATION -> AttributeType.LOCATION
     }
 
     override fun equals(other: Any?): Boolean {
@@ -263,6 +291,26 @@ sealed class Value {
         }
         return true
     }
+
+    override fun hashCode(): Int {
+        when(this){
+            is INT -> {
+                return value.hashCode()
+            }
+            is DOUBLE -> {
+                return value.hashCode()
+            }
+            is BOOL -> {
+                return value.hashCode()
+            }
+            is STRING -> {
+                return value.hashCode()
+            }
+            is LOCATION -> {
+                return value.hashCode()
+            }
+        }
+    }
 }
 
 class KeyValue (val name: String, val value: Value)  {
@@ -281,6 +329,10 @@ class KeyValue (val name: String, val value: Value)  {
         other as KeyValue
         if (other.name!=name) return false
         return other.value == value
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hash(name, value)
     }
 }
 
@@ -315,7 +367,7 @@ fun <T> descriptionPair(name: String, value: T): KeyValue = KeyValue(name,Value.
  * }
  * </pre>
  */
-class Description(
+class Description @JvmOverloads constructor(
     attributeValues: List<KeyValue>,
     dataModel: DataModel? = null,
     private var dataModelName: String = dataModel?.name ?: ""
@@ -332,7 +384,7 @@ class Description(
             this
         } ?: run{
             DataModel(dataModelName, attributeValues.map {
-                AttributeSchema(it.name, it.value.getAttributeType(), true)
+                AttributeSchema(it.name, AttributeSchema.Type.fromAttributeType(it.value.getAttributeType()), true)
             })
         }
     }
@@ -347,7 +399,7 @@ class Description(
                 if (it.required && it.name  !in lookupTable) {
                     throw AttributeInconsistencyException("Missing required attribute!")
                 }
-                if (lookupTable[it.name]!=it.type){
+                if (lookupTable[it.name]!=it.type.type){
                     throw AttributeInconsistencyException("Attribute type mismatch: ${it.name}")
                 }
                 dataModelNames.add(it.name)
@@ -395,6 +447,10 @@ class Description(
         if (dataModel != other.dataModel) return false
         if (dataModelName != other.dataModelName) return false
         return true
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hash(attributeValues, dataModel)
     }
 }
 

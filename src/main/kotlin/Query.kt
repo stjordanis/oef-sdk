@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package fetch.oef.sdk.kotlin
+package ai.fetch.oef
 
 import fetch.oef.pb.QueryOuterClass
 import fetch.oef.pb.QueryOuterClass.Query as QueryPb
@@ -54,6 +54,7 @@ class And(val constraints: List<ConstraintExpr>) : ConstraintExpr() {
         .build()
 
     companion object {
+        @Suppress("RemoveRedundantQualifierName")
         fun fromProto(obj: QueryPb.ConstraintExpr.And): And = And(obj.exprList.map { ConstraintExpr.fromProto(it) })
     }
 }
@@ -68,6 +69,7 @@ class Or(val constraints: List<ConstraintExpr>)  : ConstraintExpr() {
         .build()
 
     companion object {
+        @Suppress("RemoveRedundantQualifierName")
         fun fromProto(obj: QueryPb.ConstraintExpr.Or): Or = Or(obj.exprList.map { ConstraintExpr.fromProto(it) })
     }
 }
@@ -80,6 +82,7 @@ class Not(val constraint: ConstraintExpr) : ConstraintExpr() {
         .build()
 
     companion object {
+        @Suppress("RemoveRedundantQualifierName")
         fun fromProto(pb: QueryPb.ConstraintExpr.Not) = Not(ConstraintExpr.fromProto(pb.expr))
     }
 }
@@ -178,6 +181,7 @@ sealed class Relation (val value: Value) : ConstraintType() {
             QueryPb.Relation.Operator.GT    -> GTEQ(obj.`val`)
             QueryPb.Relation.Operator.GTEQ  -> GTEQ(obj.`val`)
             QueryPb.Relation.Operator.NOTEQ -> NOTEQ(obj.`val`)
+            else -> throw UnsupportedOperationException("Operation ${obj.op} not supported!")
         }
     }
 
@@ -310,7 +314,7 @@ class Constraint (
     }
 }
 
-class Query (
+class Query @JvmOverloads constructor(
     private val constraints: List<ConstraintExpr>,
     private val model: DataModel? = null
 ) {

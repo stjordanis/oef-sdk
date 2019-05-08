@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package fetch.oef.sdk.kotlin
+package ai.fetch.oef
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -89,13 +89,5 @@ class TypeTestSchema {
         assertAll {
             assert(It2).isEqualTo(It)
         }
-    }
-}
-
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TypeTestQuery {
-
-    @Test
-    fun `Create query object`() {
     }
 }

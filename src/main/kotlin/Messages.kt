@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package fetch.oef.sdk.kotlin
+package ai.fetch.oef
 
 import com.google.protobuf.ByteString
 import fetch.oef.pb.AgentOuterClass

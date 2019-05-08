@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package fetch.oef.sdk.kotlin
+package ai.fetch.oef
 
 import com.google.protobuf.ByteString
-import fetch.oef.pb.AgentOuterClass
 import fetch.oef.pb.FipaOuterClass
-import kotlinx.coroutines.Job
 import java.io.Closeable
 import java.nio.ByteBuffer
 import kotlin.Exception
@@ -104,9 +102,9 @@ sealed class CFPQuery {
 
     companion object {
         fun fromProto(cfp: FipaCfp): CFPQuery = when(cfp.payloadCase) {
-            CFPPayloadCase.NOTHING -> CFPQuery.TNone
-            CFPPayloadCase.CONTENT -> CFPQuery.TBytes(cfp.content.asReadOnlyByteBuffer())
-            CFPPayloadCase.QUERY   -> CFPQuery.TQuery(Query.fromProto(cfp.query))
+            CFPPayloadCase.NOTHING -> TNone
+            CFPPayloadCase.CONTENT -> TBytes(cfp.content.asReadOnlyByteBuffer())
+            CFPPayloadCase.QUERY   -> TQuery(Query.fromProto(cfp.query))
             else -> {
                 throw TypeError("Query type not valid!")
             }
@@ -132,8 +130,8 @@ sealed class Proposals {
 
     companion object {
         fun fromProto(propose: FipaPropose): Proposals = when(propose.payloadCase){
-            ProposePayloadCase.CONTENT -> Proposals.TBytes(propose.content.asReadOnlyByteBuffer())
-            else -> Proposals.TDescriptions(propose.proposals?.objectsList?.map{proposal->
+            ProposePayloadCase.CONTENT -> TBytes(propose.content.asReadOnlyByteBuffer())
+            else -> TDescriptions(propose.proposals?.objectsList?.map{proposal->
                 Description().apply {
                     fromProto(proposal)
                 }
