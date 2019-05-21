@@ -57,8 +57,8 @@ interface OEFAgentRegisterInterface {
 }
 
 interface OEFServiceRegisterInterface {
-    fun registerService(messageId: Int, serviceDescription: Description)
-    fun unregisterService(messageId: Int, serviceDescription: Description)
+    fun registerService(messageId: Int, serviceDescription: Description, serviceId: String = "")
+    fun unregisterService(messageId: Int, serviceDescription: Description, serviceId: String = "")
 }
 
 interface OEFSearchInterface {
@@ -156,12 +156,42 @@ sealed class Proposals {
 fun proposalsFrom(vararg proposals: Description) = Proposals.TDescriptions(proposals.asList())
 fun proposalsFrom(bytes: ByteBuffer)             = Proposals.TBytes(bytes)
 
+class Context {
+    var targetURI: OEFURI = OEFURI()
+    var sourceURI: OEFURI = OEFURI()
+    var serviceId: String = ""
+    var agentAlias: String = ""
+
+    fun update(target: String, source: String) {
+        targetURI.parse(target)
+        sourceURI.parse(source)
+        serviceId = targetURI.agentAlias
+        agentAlias = serviceId
+    }
+
+    fun swap() {
+        val tmp = targetURI
+        targetURI = sourceURI
+        sourceURI = tmp
+        serviceId = targetURI.agentAlias
+        agentAlias = targetURI.agentAlias
+    }
+
+    fun forAgent(target: String, source: String, same_alias: Boolean = false) {
+        targetURI.parseAgent(target)
+        sourceURI.parseAgent(source)
+        if (same_alias) {
+            sourceURI.agentAlias = targetURI.agentAlias
+        }
+    }
+}
+
 interface AgentMessageEmmiterInterface {
-    fun sendMessage(messageId: Int, dialogueId: Int, destination: String, message: ByteBuffer)
-    fun sendCFP    (messageId: Int, dialogueId: Int, destination: String, target: Int, query: CFPQuery)
-    fun sendPropose(messageId: Int, dialogueId: Int, destination: String, target: Int, proposals: Proposals)
-    fun sendAccept (messageId: Int, dialogueId: Int, destination: String, target: Int)
-    fun sendDecline(messageId: Int, dialogueId: Int, destination: String, target: Int)
+    fun sendMessage(messageId: Int, dialogueId: Int, destination: String, message: ByteBuffer, context: Context = Context())
+    fun sendCFP    (messageId: Int, dialogueId: Int, destination: String, target: Int, query: CFPQuery, context: Context = Context())
+    fun sendPropose(messageId: Int, dialogueId: Int, destination: String, target: Int, proposals: Proposals, context: Context = Context())
+    fun sendAccept (messageId: Int, dialogueId: Int, destination: String, target: Int, context: Context = Context())
+    fun sendDecline(messageId: Int, dialogueId: Int, destination: String, target: Int, context: Context = Context())
 }
 
 interface AgentMessageHandlerInterface {
@@ -176,7 +206,10 @@ interface OEFProxyInterface :
         OEFAgentRegisterInterface,
         OEFServiceRegisterInterface,
         OEFSearchInterface,
-        AgentMessageEmmiterInterface
+        AgentMessageEmmiterInterface {
+
+    fun getContext(messageId: Int, dialogueId: Int, origin: String): Context
+}
 
 interface AgentCommunicationHandlerInterface :
         OEFCommunicationErrorHandlerInterface,

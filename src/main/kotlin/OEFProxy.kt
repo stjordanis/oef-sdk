@@ -18,7 +18,9 @@ package ai.fetch.oef
 import fetch.oef.pb.AgentOuterClass
 import fetch.oef.pb.FipaOuterClass
 import java.nio.ByteBuffer
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.collections.HashMap
 import kotlin.concurrent.withLock
 
 private typealias PayloadCase        = AgentOuterClass.Server.AgentMessage.PayloadCase
@@ -27,7 +29,7 @@ private typealias MsgCase            = FipaOuterClass.Fipa.Message.MsgCase
 
 abstract class OEFProxy (
     protected val publicKey: String
-) : OEFProxyInterface, OEFDelayInterface {
+) : OEFProxyInterface, OEFDelayInterface{
 
 
     companion object {
@@ -37,6 +39,8 @@ abstract class OEFProxy (
     private val lock = ReentrantLock()
     private val agentSetCondition = lock.newCondition()
     private lateinit var agent: AgentCommunicationHandlerInterface
+
+    private val contextStore: ConcurrentHashMap<String, Context> = ConcurrentHashMap()
 
     internal abstract fun connect(): Boolean
     internal abstract fun stop()
@@ -51,6 +55,9 @@ abstract class OEFProxy (
             agentSetCondition.signalAll()
         }
     }
+
+    override fun getContext(messageId: Int, dialogueId: Int, origin: String): Context =
+        contextStore.getOrDefault("$messageId:$dialogueId:$origin", Context())
 
     protected fun processMessage(data: ByteBuffer) = try {
         if (!::agent.isInitialized) {
@@ -85,27 +92,47 @@ abstract class OEFProxy (
                 })
             }
             PayloadCase.CONTENT -> msg.content?.run {
-                when (payloadCase) {
-                    ContentPayloadCase.CONTENT -> agent.onMessage(msg.answerId, dialogueId, origin, content.asReadOnlyByteBuffer())
-                    ContentPayloadCase.FIPA -> fipa?.let { fipa ->
-                        when (fipa.msgCase) {
-                            MsgCase.CFP -> fipa.cfp?.let { cfp ->
-                                agent.onCFP(msg.answerId, dialogueId, origin, fipa.target, CFPQuery.fromProto(cfp))
-                            }
-                            MsgCase.PROPOSE -> fipa.propose?.let { propose ->
-                                agent.onPropose(msg.answerId, dialogueId, origin, fipa.target, Proposals.fromProto(propose))
-                            }
-                            MsgCase.ACCEPT -> agent.onAccept(msg.answerId, dialogueId, origin, fipa.target)
-                            MsgCase.DECLINE -> agent.onDecline(msg.answerId, dialogueId, origin, fipa.target)
-                            else -> {
-                                log.warn("Not implemented yet: fipa ${fipa.msgCase.name}")
+                val contextKey = "${msg.answerId}:$dialogueId:$origin"
+                contextStore[contextKey] = Context().also {
+                    it.update(msg.targetUri, msg.sourceUri)
+                }
+                try {
+                    when (payloadCase) {
+                        ContentPayloadCase.CONTENT -> agent.onMessage(
+                            msg.answerId,
+                            dialogueId,
+                            origin,
+                            content.asReadOnlyByteBuffer()
+                        )
+                        ContentPayloadCase.FIPA -> fipa?.let { fipa ->
+                            when (fipa.msgCase) {
+                                MsgCase.CFP -> fipa.cfp?.let { cfp ->
+                                    agent.onCFP(msg.answerId, dialogueId, origin, fipa.target, CFPQuery.fromProto(cfp))
+                                }
+                                MsgCase.PROPOSE -> fipa.propose?.let { propose ->
+                                    agent.onPropose(
+                                        msg.answerId,
+                                        dialogueId,
+                                        origin,
+                                        fipa.target,
+                                        Proposals.fromProto(propose)
+                                    )
+                                }
+                                MsgCase.ACCEPT -> agent.onAccept(msg.answerId, dialogueId, origin, fipa.target)
+                                MsgCase.DECLINE -> agent.onDecline(msg.answerId, dialogueId, origin, fipa.target)
+                                else -> {
+                                    log.warn("Not implemented yet: fipa ${fipa.msgCase.name}")
+                                }
                             }
                         }
+                        else -> {
+                            log.warn("Not supported content type: ${payloadCase.name}")
+                        }
                     }
-                    else -> {
-                        log.warn("Not supported content type: ${payloadCase.name}")
-                    }
+                } finally {
+                    contextStore.remove(contextKey)
                 }
+                Unit
             }
             else -> {
                 log.warn("Not supported payload case in AgentMessage (${msg.payloadCase.name})! ")
