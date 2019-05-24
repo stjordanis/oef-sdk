@@ -36,7 +36,7 @@ class OEFURI {
     }
 
     fun parse(uri: String) = uri.split("/").let {
-        if (it.size < 6) {
+        if (it.size < 7) {
             log.warn("OEFURI parse failed! Invalid URI: $uri")
             return@let
         }
