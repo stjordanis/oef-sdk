@@ -54,8 +54,10 @@ interface BaseMessage {
     fun toEnvelope(): Envelope
 }
 
-private fun newEnvelopeBuilder(messageId: Int) = Envelope.newBuilder()
+private fun newEnvelopeBuilder(messageId: Int, agent_uri: OEFURI = OEFURI()) = Envelope.newBuilder()
     .setMsgId(messageId)
+    .setAgentUri(agent_uri.toString())
+
 
 /**
  *  This message is used for registering a new agent  in the Agent Directory of an OEF Node.
@@ -76,9 +78,10 @@ class RegisterDescription (
  */
 class RegisterService (
     private val msgId: Int,
-    private val serviceDescription: Description
+    private val serviceDescription: Description,
+    private val uri: OEFURI = OEFURI()
 ) : BaseMessage {
-    override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId)
+    override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId, uri)
         .setRegisterService(serviceDescription.toAgentDescription())
         .build()
 }
@@ -87,9 +90,10 @@ class RegisterService (
  * This message is used for unregistering an agent in the Agent Directory of an OEF Node.
  */
 class UnregisterDescription (
-    private val msgId: Int
+    private val msgId: Int,
+    private val uri: OEFURI = OEFURI()
 ) : BaseMessage {
-    override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId)
+    override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId, uri)
         .setUnregisterDescription(Nothing.newBuilder().build())
         .build()
 }
@@ -99,9 +103,10 @@ class UnregisterDescription (
  */
 class UnregisterService (
     private val msgId: Int,
-    private val serviceDescription: Description
+    private val serviceDescription: Description,
+    private val uri: OEFURI = OEFURI()
 ): BaseMessage {
-    override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId)
+    override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId, uri)
         .setUnregisterService(serviceDescription.toAgentDescription())
         .build()
 }
@@ -174,12 +179,15 @@ private fun createEnvelopeWithAgentMessageBuilder(
     messageId: Int,
     dialogueId: Int,
     destination: String,
+    context: Context,
     block: AgentMessageBuilder.()->Unit
 ) =  newEnvelopeBuilder(messageId)
     .setSendMessage(
         AgentMessagePb.newBuilder()
             .setDialogueId(dialogueId)
             .setDestination(destination)
+            .setSourceUri(context.sourceURI.toString())
+            .setTargetUri(context.targetURI.toString())
             .apply(block)
     )
 
@@ -202,9 +210,10 @@ class Message(
     private val messageId: Int,
     private val dialogueId: Int,
     private val destination: String,
-    private val message: ByteBuffer
+    private val message: ByteBuffer,
+    private val context: Context = Context()
 ) : AgentMessage {
-    override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination) {
+    override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination, context) {
         content = ByteString.copyFrom(message)
     }.build()
 }
@@ -223,9 +232,10 @@ class CFP (
     private val dialogueId: Int,
     private val destination: String,
     private val targetId: Int,
-    private val query: CFPQuery
+    private val query: CFPQuery,
+    private val context: Context = Context()
 ) : AgentMessage {
-    override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination) {
+    override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination, context) {
         fipa = createFipaMessage(targetId) {
             cfp = CFPQuery.toProto(query)
         }
@@ -246,9 +256,10 @@ class Propose (
     private val dialogueId: Int,
     private val destination: String,
     private val targetId: Int,
-    private val proposals: Proposals
+    private val proposals: Proposals,
+    private val context: Context = Context()
 ) : AgentMessage {
-    override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination) {
+    override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination, context) {
         fipa = createFipaMessage(targetId) {
             propose = Proposals.toProto(proposals)
         }
@@ -267,9 +278,10 @@ class Accept (
     private val messageId: Int,
     private val dialogueId: Int,
     private val destination: String,
-    private val targetId: Int
+    private val targetId: Int,
+    private val context: Context = Context()
 ) : AgentMessage {
-    override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination) {
+    override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination, context) {
         fipa = createFipaMessage(targetId) {
             accept = FipaAccept.newBuilder().build()
         }
@@ -288,9 +300,10 @@ class Decline (
     private val messageId: Int,
     private val dialogueId: Int,
     private val destination: String,
-    private val targetId: Int
+    private val targetId: Int,
+    private val context: Context = Context()
 ) : AgentMessage {
-    override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination) {
+    override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination, context) {
         fipa = createFipaMessage(targetId) {
             decline = FipaDecline.newBuilder().build()
         }

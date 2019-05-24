@@ -22,7 +22,7 @@ import java.nio.ByteBuffer
 
 
 class WeatherClient (
-    publicKey: String,
+    private val publicKey: String,
     oefAddress: String,
     oefPort: Int
 ) : OEFAgent(publicKey, oefAddress, oefPort) {
@@ -41,8 +41,13 @@ class WeatherClient (
 
     override fun onSearchResult(searchId: Int, agents: List<String>) {
         log.info("Found agents: $agents, sending cfps...")
+        var i=10
         for(agent in agents){
-            sendCFP(1, 0, agent, 0, cfpQueryFrom(Query()))
+            //we need to do this if we get agent_key/agent_alias and we don't want to lose agent_alias
+            val context = Context()
+            context.forAgent(agent, publicKey, true) // agent alias will be the same
+            log.info("TARGET: ${context.targetURI}")
+            sendCFP(i++, 0, agent, 0, cfpQueryFrom(Query()))
         }
     }
 
@@ -52,7 +57,8 @@ class WeatherClient (
 
     override fun onMessage(answerId: Int, dialogueId: Int, origin: String, content: ByteBuffer) {
         val data = messageCoder.decode(content).toString()
-        log.info("Received message from $origin. Message: $data")
+        val context = getContext(answerId, dialogueId, origin)
+        log.info("Received message from $origin (source=${context.sourceURI}, target = ${context.targetURI}). Message: $data")
     }
 
     override fun onCFP(answerId: Int, dialogueId: Int, origin: String, target: Int, query: CFPQuery) {
@@ -60,7 +66,8 @@ class WeatherClient (
     }
 
     override fun onPropose(answerId: Int, dialogueId: Int, origin: String, target: Int, proposals: Proposals) {
-        log.info("Received propose from agent $origin")
+        val context = getContext(answerId, dialogueId, origin)
+        log.info("Received propose from agent $origin (source=${context.sourceURI}, target=${context.targetURI})")
         proposals as Proposals.TDescriptions
         for (i in 0 until proposals.value.size) {
             proposals.value[i].attributeValues.forEach {
@@ -68,7 +75,8 @@ class WeatherClient (
             }
         }
         log.info("Accepting proposal")
-        sendAccept(answerId, dialogueId, origin, answerId+1)
+        context.swap()
+        sendAccept(answerId, dialogueId, origin, answerId+1, context)
     }
 
     override fun onAccept(answerId: Int, dialogueId: Int, origin: String, target: Int) {
@@ -81,7 +89,7 @@ class WeatherClient (
 }
 
 fun main(args: Array<String>)  = runBlocking<Unit> {
-    val agent = WeatherClient("weather_client2", "127.0.0.1", 10000)
+    val agent = WeatherClient("weather_client", "127.0.0.1", 10002)
 
     if (!agent.connect()){
         return@runBlocking
@@ -91,8 +99,10 @@ fun main(args: Array<String>)  = runBlocking<Unit> {
         listOf(
             Constraint(WeatherAttr.Temperature.name, Relation.EQ(true)),
             Constraint(WeatherAttr.AirPressure.name, Relation.EQ(true)),
-            Constraint(WeatherAttr.Humidity.name,    Relation.EQ(true)),
-            Constraint("location", Distance(Location(435.4, 425.3), 20000.0))
+            Constraint(WeatherAttr.Humidity.name,    Relation.EQ(true))
+
+
+         //   ,Constraint("location", Distance(Location(435.4, 425.3), 200000.0))
         ),
         WeatherDataModel
     )

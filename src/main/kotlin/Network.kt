@@ -135,7 +135,7 @@ class OEFNetworkProxy(
             sizeBuffer.flip()
             val size = sizeBuffer.int
             if (size==0) throw ClosedChannelException()
-            log.info("Red size: $size")
+            log.info("Got size: $size")
             val buffer = ByteBuffer.allocate(size)
             socketChannel.aReadFullBuffer(buffer)
             buffer.flip()
@@ -269,15 +269,23 @@ class OEFNetworkProxy(
     /**
      * Register service with the OEF.
      */
-    override fun registerService(messageId: Int, serviceDescription: Description) {
-        messageChannel.offer(RegisterService(messageId, serviceDescription).toEnvelope())
+    override fun registerService(messageId: Int, serviceDescription: Description, serviceId: String) {
+        val uri: OEFURI = OEFURI.Builder()
+            .agentKey(publicKey)
+            .agentAlias(serviceId)
+            .build()
+        messageChannel.offer(RegisterService(messageId, serviceDescription, uri).toEnvelope())
     }
 
     /**
      * Unregister service with the OEF.
      */
-    override fun unregisterService(messageId: Int, serviceDescription: Description) {
-        messageChannel.offer(RegisterService(messageId, serviceDescription).toEnvelope())
+    override fun unregisterService(messageId: Int, serviceDescription: Description, serviceId: String) {
+        val uri: OEFURI = OEFURI.Builder()
+            .agentKey(publicKey)
+            .agentAlias(serviceId)
+            .build()
+        messageChannel.offer(UnregisterService(messageId, serviceDescription, uri).toEnvelope())
     }
 
     /**
@@ -304,35 +312,35 @@ class OEFNetworkProxy(
     /**
      * Send byte message to the other agent
      */
-    override fun sendMessage(messageId: Int, dialogueId: Int, destination: String, message: ByteBuffer) {
-        messageChannel.offer(Message(messageId, dialogueId, destination, message).toEnvelope())
+    override fun sendMessage(messageId: Int, dialogueId: Int, destination: String, message: ByteBuffer, context: Context) {
+        messageChannel.offer(Message(messageId, dialogueId, destination, message, context).toEnvelope())
     }
 
     /**
      * Send CFP to the other agent
      */
-    override fun sendCFP(messageId: Int, dialogueId: Int, destination: String,  target: Int, query: CFPQuery) {
-        messageChannel.offer(CFP(messageId, dialogueId, destination, target, query).toEnvelope())
+    override fun sendCFP(messageId: Int, dialogueId: Int, destination: String,  target: Int, query: CFPQuery, context: Context) {
+        messageChannel.offer(CFP(messageId, dialogueId, destination, target, query, context).toEnvelope())
     }
 
     /**
      * Send proposal to the other agent
      */
-    override fun sendPropose(messageId: Int, dialogueId: Int, destination: String,  target: Int, proposals: Proposals) {
-        messageChannel.offer(Propose(messageId, dialogueId, destination, target, proposals).toEnvelope())
+    override fun sendPropose(messageId: Int, dialogueId: Int, destination: String,  target: Int, proposals: Proposals, context: Context) {
+        messageChannel.offer(Propose(messageId, dialogueId, destination, target, proposals, context).toEnvelope())
     }
 
     /**
      * Send accept message to the other agent
      */
-    override fun sendAccept(messageId: Int, dialogueId: Int, destination: String, target: Int) {
-        messageChannel.offer(Accept(messageId, dialogueId, destination, target).toEnvelope())
+    override fun sendAccept(messageId: Int, dialogueId: Int, destination: String, target: Int, context: Context) {
+        messageChannel.offer(Accept(messageId, dialogueId, destination, target, context).toEnvelope())
     }
 
     /**
      * Send decline message to the other agent
      */
-    override fun sendDecline( messageId: Int, dialogueId: Int, destination: String, target: Int) {
-        messageChannel.offer(Decline(messageId, dialogueId, destination, target).toEnvelope())
+    override fun sendDecline( messageId: Int, dialogueId: Int, destination: String, target: Int, context: Context) {
+        messageChannel.offer(Decline(messageId, dialogueId, destination, target, context).toEnvelope())
     }
 }
