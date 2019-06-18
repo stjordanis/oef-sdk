@@ -25,7 +25,11 @@
 <p><a href="-agent/index.html">Agent</a></p>
 </td>
 <td>
-<code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">Agent</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-o-e-f-proxy-interface/index.html"><span class="identifier">OEFProxyInterface</span></a><span class="symbol">, </span><a href="-o-e-f-delay-interface/index.html"><span class="identifier">OEFDelayInterface</span></a><span class="symbol">, </span><a href="-agent-communication-handler-interface.html"><span class="identifier">AgentCommunicationHandlerInterface</span></a><span class="symbol">, </span><a href="-o-e-f-connection-interface/index.html"><span class="identifier">OEFConnectionInterface</span></a></code></td>
+<code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">Agent</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-o-e-f-proxy-interface/index.html"><span class="identifier">OEFProxyInterface</span></a><span class="symbol">, </span><a href="-o-e-f-delay-interface/index.html"><span class="identifier">OEFDelayInterface</span></a><span class="symbol">, </span><a href="-agent-communication-handler-interface.html"><span class="identifier">AgentCommunicationHandlerInterface</span></a><span class="symbol">, </span><a href="-o-e-f-connection-interface/index.html"><span class="identifier">OEFConnectionInterface</span></a></code>
+<p>The base class for OEF Agents.
+Extend this class to implement the callback methods defined in <a href="-agent-message-handler-interface/index.html">AgentMessageHandlerInterface</a> and <a href="-o-e-f-connection-interface/index.html">OEFConnectionInterface</a>.
+In this way you can program the behaviour of the agent when it's running.</p>
+</td>
 </tr>
 <tr>
 <td>
@@ -218,7 +222,9 @@ That is, the Not constraint is satisfied whenever the constraint that constitute
 <p><a href="-o-e-f-agent/index.html">OEFAgent</a></p>
 </td>
 <td>
-<code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">OEFAgent</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-agent/index.html"><span class="identifier">Agent</span></a></code></td>
+<code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">OEFAgent</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-agent/index.html"><span class="identifier">Agent</span></a></code>
+<p>Agent that interacts with an OEFNode on the network.</p>
+</td>
 </tr>
 <tr>
 <td>
