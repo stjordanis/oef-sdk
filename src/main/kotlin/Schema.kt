@@ -175,7 +175,7 @@ class DataModel(
     var name: String = name
         private set
 
-    var description: String = description
+    var description: String? = description
         private set
 
     constructor() : this("", listOf())
