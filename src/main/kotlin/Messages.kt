@@ -20,17 +20,21 @@ import fetch.oef.pb.AgentOuterClass
 import fetch.oef.pb.FipaOuterClass
 import java.nio.ByteBuffer
 
-internal typealias Envelope           = AgentOuterClass.Envelope
-private typealias Nothing             = AgentOuterClass.Envelope.Nothing
-private typealias AgentSearch         = AgentOuterClass.AgentSearch
-private typealias AgentMessagePb      = AgentOuterClass.Agent.Message
-private typealias FipaMessagePb       = FipaOuterClass.Fipa.Message
-private typealias AgentMessageBuilder = AgentOuterClass.Agent.Message.Builder
-private typealias FipaMessageBuilder  = FipaOuterClass.Fipa.Message.Builder
-private typealias FipaAccept          = FipaOuterClass.Fipa.Accept
-private typealias FipaDecline         = FipaOuterClass.Fipa.Decline
-private typealias OEFErrorOperation   = AgentOuterClass.Server.AgentMessage.OEFError.Operation
+typealias Envelope           = AgentOuterClass.Envelope
+typealias Nothing             = AgentOuterClass.Envelope.Nothing
+typealias AgentSearch         = AgentOuterClass.AgentSearch
+typealias AgentMessagePb      = AgentOuterClass.Agent.Message
+typealias FipaMessagePb       = FipaOuterClass.Fipa.Message
+typealias AgentMessageBuilder = AgentOuterClass.Agent.Message.Builder
+typealias FipaMessageBuilder  = FipaOuterClass.Fipa.Message.Builder
+typealias FipaAccept          = FipaOuterClass.Fipa.Accept
+typealias FipaDecline         = FipaOuterClass.Fipa.Decline
+typealias OEFErrorOperation   = AgentOuterClass.Server.AgentMessage.OEFError.Operation
 
+
+/**
+ * This class repesents the different error types we can get from the OEF.
+ */
 enum class OEFError {
     REGISTER_SERVICE,
     UNREGISTER_SERVICE,
@@ -50,6 +54,10 @@ enum class OEFError {
 }
 
 
+/**
+ * To communicate with the OEF we need to send protocol buffer containing an Envelope message. This interface is the base for a classes
+ * representing OEF data.
+ */
 interface BaseMessage {
     fun toEnvelope(): Envelope
 }
@@ -61,12 +69,19 @@ private fun newEnvelopeBuilder(messageId: Int, agent_uri: OEFURI = OEFURI()) = E
 
 /**
  *  This message is used for registering a new agent  in the Agent Directory of an OEF Node.
- *  The agent is described by a :class:`~oef.schema.Description` object.
+ *  The agent is described by a Description message object.
+ *
+ *  @param msgId identifier of the message
+ *  @param agentDescription the agent's description
  */
 class RegisterDescription (
     private val msgId: Int,
-    private val agentDescription: Description
+    private val agentDescription: Description,
+    private val uri: OEFURI = OEFURI()
 ) : BaseMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId)
         .setRegisterDescription(agentDescription.toAgentDescription())
         .build()
@@ -74,13 +89,20 @@ class RegisterDescription (
 
 /**
  * This message is used for registering a new agent in the Service Directory of an OEF Node.
- * The service agent is described by a :class:`~oef.schema.Description` object.
+ * The service agent is described by a Description message object.
+ *
+ *  @param msgId identifier of the message
+ *  @param serviceDescription the description of the service provided by the agent
+ *  @param uri resource identifier for the service. Using this field one agent is able to register multiple service.
  */
 class RegisterService (
     private val msgId: Int,
     private val serviceDescription: Description,
     private val uri: OEFURI = OEFURI()
 ) : BaseMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId, uri)
         .setRegisterService(serviceDescription.toAgentDescription())
         .build()
@@ -88,24 +110,32 @@ class RegisterService (
 
 /**
  * This message is used for unregistering an agent in the Agent Directory of an OEF Node.
+ *  @param msgId identifier of the message
  */
 class UnregisterDescription (
-    private val msgId: Int,
-    private val uri: OEFURI = OEFURI()
+    private val msgId: Int
 ) : BaseMessage {
-    override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId, uri)
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
+    override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId)
         .setUnregisterDescription(Nothing.newBuilder().build())
         .build()
 }
 
 /**
- * This message is used for unregistering a `(service agent, description)` in the Service Directory of an OEF Node.
+ * This message is used for unregistering a service provided by the agent from the OEF.
+ *
+ * @param serviceDescription the description of the service provided by the agent
  */
 class UnregisterService (
     private val msgId: Int,
     private val serviceDescription: Description,
     private val uri: OEFURI = OEFURI()
 ): BaseMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = newEnvelopeBuilder(msgId, uri)
         .setUnregisterService(serviceDescription.toAgentDescription())
         .build()
@@ -122,6 +152,9 @@ class SearchAgents(
     private val searchId: Int,
     private val query: Query
 ): BaseMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = newEnvelopeBuilder(searchId)
         .setSearchAgents(
             AgentSearch.newBuilder()
@@ -131,16 +164,20 @@ class SearchAgents(
 }
 
 /**
- * This message is used for searching services in the Service Directory of an OEF Node.
- * It contains:
- *      - a search id, that identifies the search query. This id will be used
+ * This message is used for searching agents which provides the queried service. This search will only search on
+ * the local node the agent connected to, and not the whole OEF network.
+ *
+ * @param searchId identifies the search query. This id will be used
  *         by the sender in order to distinguish different incoming search results.
- *      - a query, i.e. a list of constraints defined over a data model.
+ * @param query i.e. a list of constraints defined over a data model.
  */
 class SearchServices (
     private val searchId: Int,
     private val query: Query
 ) : BaseMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = newEnvelopeBuilder(searchId)
         .setSearchServices(
             AgentSearch.newBuilder()
@@ -151,15 +188,18 @@ class SearchServices (
 
 /**
  * This message is used for searching agents in OEF Network.
- * It contains:
- *  - a search id, that identifies the search query. This id will be used by the sender
+ *
+ * @param searchId identifies the search query. This id will be used by the sender
  *    in order to distinguish different incoming search results.
- *  - a query, i.e. a list of constraints defined over a data model.
+ * @param query i.e. a list of constraints defined over a data model.
  */
 class SearchServicesWide(
     private val searchId: Int,
     private val query: Query
 ): BaseMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = newEnvelopeBuilder(searchId)
         .setSearchServicesWide(
             AgentSearch.newBuilder()
@@ -201,10 +241,12 @@ private fun createFipaMessage(
 
 /**
  * This message is used to send a generic message to other agents.
- * It contains:
- *      - a dialogue id, that identifies the dialogue in which the message is sent.
- *      - a destination, that is the public key of the recipient of the message.
- *      -  a sequence of bytes, that is the content of the message.
+ *
+ * @param dialogueId identifies the dialogue in which the message is sent.
+ * @param destination the public key of the recipient of the message.
+ * @param message sequence of bytes, that is the content of the message.
+ * @param context Context object used to send the message to the agent's specific role (the target agent has multiple
+ * services registered, and the source agent is trying to communicate regarding one of the services)
  */
 class Message(
     private val messageId: Int,
@@ -213,6 +255,9 @@ class Message(
     private val message: ByteBuffer,
     private val context: Context = Context()
 ) : AgentMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination, context) {
         content = ByteString.copyFrom(message)
     }.build()
@@ -220,12 +265,14 @@ class Message(
 
 /**
  * This message is used to send a `Call For Proposals`.
- * It contains:
- *      - a dialogue id, that identifies the dialogue in which the message is sent.
- *      - a destination, that is the public key of the recipient of the message.
- *      - a query, that describes the resources the sender is interested in.
- *      - a message id, that is an unique identifier for a message, given dialogue.
- *      - a target id, that is, the identifier of the message to whom this message is targeting, in a given dialogue.
+ *
+ * @param messageId unique identifier for a message, given dialogue
+ * @param dialogueId identifies the dialogue in which the message is sent
+ * @param destination the public key of the recipient of the message
+ * @param query describes the resources the sender is interested in
+ * @param targetId the identifier of the message to whom this message is targeting, in a given dialogue
+ * @param context Context object used to send the message to the agent's specific role (the target agent has multiple
+ * services registered, and the source agent is trying to communicate regarding one of the services)
  */
 class CFP (
     private val messageId: Int,
@@ -235,6 +282,9 @@ class CFP (
     private val query: CFPQuery,
     private val context: Context = Context()
 ) : AgentMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination, context) {
         fipa = createFipaMessage(targetId) {
             cfp = CFPQuery.toProto(query)
@@ -245,11 +295,19 @@ class CFP (
 /**
  * This message is used to send a `Propose`.
  * It contains:
- *      - a dialogue id, that identifies the dialogue in which the message is sent.
- *      - a destination, that is the public key of the recipient of the message.
- *      - a list of proposals describing the resources that the seller proposes.
+ *      - a dialogue id, that.
+ *      - a destination, that is .
+ *      - a .
  *      - the message id, that is an unique identifier for a message, given dialogue.
  *      - target, that is, the identifier of the message to whom this message is targeting.
+ *
+ * @param messageId unique identifier for a message, given dialogue
+ * @param dialogueId identifies the dialogue in which the message is sent
+ * @param destination the public key of the recipient of the message
+ * @param targetId the identifier of the message to whom this message is targeting
+ * @param proposals list of proposals describing the resources that the seller proposes
+ * @param context Context object used to send the message to the agent's specific role (the target agent has multiple
+ * services registered, and the source agent is trying to communicate regarding one of the services)
  */
 class Propose (
     private val messageId: Int,
@@ -259,6 +317,9 @@ class Propose (
     private val proposals: Proposals,
     private val context: Context = Context()
 ) : AgentMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination, context) {
         fipa = createFipaMessage(targetId) {
             propose = Proposals.toProto(proposals)
@@ -268,11 +329,13 @@ class Propose (
 
 /**
  *  This message is used to send an `Accept`.
- *  It contains:
- *      - a dialogue id, that identifies the dialogue in which the message is sent.
- *      - a destination, that is the public key of the recipient of the message.
- *      - the message id, that is an unique identifier for a message, given dialogue.
- *      - target, that is, the identifier of the message to whom this message is targeting.
+ *
+ * @param messageId unique identifier for a message, given dialogue
+ * @param dialogueId identifies the dialogue in which the message is sent
+ * @param destination the public key of the recipient of the message
+ * @param targetId the identifier of the message to whom this message is targeting
+ * @param context Context object used to send the message to the agent's specific role (the target agent has multiple
+ * services registered, and the source agent is trying to communicate regarding one of the services)
  */
 class Accept (
     private val messageId: Int,
@@ -281,6 +344,9 @@ class Accept (
     private val targetId: Int,
     private val context: Context = Context()
 ) : AgentMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination, context) {
         fipa = createFipaMessage(targetId) {
             accept = FipaAccept.newBuilder().build()
@@ -290,11 +356,13 @@ class Accept (
 
 /**
  * This message is used to send an `Decline`.
- * It contains:
- *      - a dialogue id, that identifies the dialogue in which the message is sent.
- *      - a destination, that is the public key of the recipient of the message.
- *      - the message id, that is an unique identifier for a message, given dialogue.
- *      - target, that is, the identifier of the message to whom this message is targeting.
+
+ * @param messageId unique identifier for a message, given dialogue
+ * @param dialogueId identifies the dialogue in which the message is sent
+ * @param destination the public key of the recipient of the message
+ * @param targetId the identifier of the message to whom this message is targeting
+ * @param context Context object used to send the message to the agent's specific role (the target agent has multiple
+ * services registered, and the source agent is trying to communicate regarding one of the services)
  */
 class Decline (
     private val messageId: Int,
@@ -303,6 +371,9 @@ class Decline (
     private val targetId: Int,
     private val context: Context = Context()
 ) : AgentMessage {
+    /**
+     * Wrapps the message to the OEF acceptable Envelope message.
+     */
     override fun toEnvelope(): Envelope = createEnvelopeWithAgentMessageBuilder(messageId, dialogueId, destination, context) {
         fipa = createFipaMessage(targetId) {
             decline = FipaDecline.newBuilder().build()
