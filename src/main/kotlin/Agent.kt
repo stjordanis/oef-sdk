@@ -17,6 +17,12 @@ package ai.fetch.oef
 
 import kotlin.coroutines.CoroutineContext
 
+
+/**
+ * The base class for OEF Agents.
+ * Extend this class to implement the callback methods defined in [AgentMessageHandlerInterface] and [OEFConnectionInterface].
+ * In this way you can program the behaviour of the agent when it's running.
+ */
 abstract class Agent (
     private val proxy: OEFProxy
 ) : OEFProxyInterface by proxy,
@@ -24,16 +30,28 @@ abstract class Agent (
     AgentCommunicationHandlerInterface,
     OEFConnectionInterface {
 
+    /**
+     * Connect to the OEF Node.
+     * @return True if the connection has been established successfully, False otherwise.
+     */
     override fun connect(): Boolean {
         proxy.setAgent(this)
         return proxy.connect()
     }
 
+    /**
+     * Disconnect from the OEF Node.
+     * @return None
+     */
     override fun stop() {
         proxy.stop()
     }
 }
 
+
+/**
+ * Agent that interacts with an OEFNode on the network.
+ */
 abstract class OEFAgent @JvmOverloads constructor(
     publicKey: String,
     oefAddress: String,
