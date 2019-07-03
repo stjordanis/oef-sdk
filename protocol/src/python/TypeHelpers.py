@@ -1,6 +1,24 @@
 from protocol.src.proto import dap_interface_pb2
 
 
+def _set_location(target, data):
+    """
+    Updates location part of a ValueMessage protobuf.
+
+    :param target: ValueMessage protobuf
+    :param data: source data, format: data[0]=coordinate_system, data[1]=unit, data[2]=list of doubles
+    :return:
+    """
+    target.l.coordinate_system = data[0]
+    target.l.unit = data[1]
+    target.l.v.append(data[2][0])
+    target.l.v.append(data[2][1])
+
+
+def _get_location(src):
+    return src.l.coordinate_system, src.unit, src.l.v[:],
+
+
 def encodeConstraintValue(data, typecode, logger):
     valueMessage = dap_interface_pb2.ValueMessage()
     valueMessage.typecode = typecode
@@ -20,8 +38,7 @@ def encodeConstraintValue(data, typecode, logger):
         valueMessage.i64 = data
 
     elif typecode == 'location':
-        valueMessage.v_d.append(data[0])
-        valueMessage.v_d.append(data[1])
+        _set_location(valueMessage, data)
 
     elif typecode == 'data_model':
         valueMessage.dm.CopyFrom(data)
@@ -39,8 +56,7 @@ def encodeConstraintValue(data, typecode, logger):
 
     elif typecode == 'location_list':
         for d in data:
-            valueMessage.d.append(d[0])
-            valueMessage.d.append(d[1])
+            _set_location(valueMessage.v_l.add(), d)
 
     elif typecode == 'string_pair':
         valueMessage.d.append(data[0])
@@ -68,10 +84,9 @@ def encodeConstraintValue(data, typecode, logger):
         valueMessage.v_i64.append(data[1])
 
     elif typecode == 'location_range':
-        valueMessage.d.append(data[0][0])
-        valueMessage.d.append(data[0][1])
-        valueMessage.d.append(data[1][0])
-        valueMessage.d.append(data[1][1])
+        _set_location(valueMessage.v_l.add(), data[0])
+        _set_location(valueMessage.v_l.add(), data[1])
+
     else:
         logger.error("encodeConstraintValue doesn't know how to write a '{}'".format(typecode))
 
@@ -95,19 +110,19 @@ def decodeConstraintValue(valueMessage):
         'int64_list':    lambda x: x.v_i64,
 
         'data_model':    lambda x: x.dm,
-        'embedding':    lambda x: x.v_d,
+        'embedding':     lambda x: x.v_d,
 
-        'string_pair':  lambda x: (x.v_s[0], x.v_s[1],),
-        'string_pair_list':  lambda x: [ ( x.v_d[i], x.v_d[i+1], ) for i in range(0, len(x.v_d), 2) ],
+        'string_pair':      lambda x: (x.v_s[0], x.v_s[1],),
+        'string_pair_list': lambda x: [ ( x.v_d[i], x.v_d[i+1], ) for i in range(0, len(x.v_d), 2) ],
 
         'string_range':  lambda x: (x.v_s[0], x.v_s[1],),
         'float_range':   lambda x: (x.v_f[0], x.v_f[1],),
         'double_range':  lambda x: (x.v_d[0], x.v_d[1],),
-        'int32_range':     lambda x: (x.v_i32[0], x.v_i32[1],),
-        'int64_range':     lambda x: (x.v_i64[0], x.v_i64[1],),
+        'int32_range':   lambda x: (x.v_i32[0], x.v_i32[1],),
+        'int64_range':   lambda x: (x.v_i64[0], x.v_i64[1],),
 
-        'location':      lambda x: (x.v_d[0], x.v_d[1],),
-        'location_range':lambda x: ((x.v_d[0], x.v_d[1],), (x.v_d[2], x.v_d[3],), ),
-        'location_list': lambda x: [ ( x.v_d[i], x.v_d[i+1], ) for i in range(0, len(x.v_d), 2) ],
+        'location':       lambda x: _get_location(x),
+        'location_range': lambda x: (_get_location(x.v_l[0]), _get_location(x.v_l[1])),
+        'location_list':  lambda x: [_get_location(y) for y in x.v_l],
 
     }[valueMessage.typecode](valueMessage)

@@ -94,7 +94,7 @@ class Branch(object):
         self.subnodes = [Branch().fromProto(x) for x in pb.children]
         return self
 
-    def toProto(self, dap_name):
+    def toProto(self, dap_name=""):
         pb = dap_interface_pb2.ConstructQueryObjectRequest()
         pb.operator = self.combiner
         pb.dap_names.extend(list(self.dap_names))

@@ -1,3 +1,4 @@
+from protocol.src.python.Wrappers import Location
 
 
 TYPE_STRING = "string"
@@ -44,6 +45,8 @@ def pythonTypeToString(value):
         return TYPE_STRING
     elif isinstance(value, bool):
         return TYPE_BOOL
+    elif isinstance(value, Location):
+        return TYPE_LOCATION
     else:
         print("pythonTypeToString, type not supported: ", type(value), ". value=", value)
 
@@ -135,3 +138,7 @@ def decodeAttributeValueToTypeValue(av):
 
 def decodeAttributeValueToType(av):
     return decodeAttributeValueToInfo(av)[0]
+
+
+def typeToRange(type_str: str):
+    return type_str + "_range"

@@ -32,6 +32,12 @@ message ValueMessage
                 string description = 3;
         }
 
+        message Location {
+                string coordinate_system = 1; //e.g. latlon, latlonz
+                string unit = 2;
+                repeated double v = 3;
+        }
+
 
         string typecode = 1;
 
@@ -46,14 +52,16 @@ message ValueMessage
         bool b    = 7;
 
         DataModel dm = 8;
-        Attribute a = 9;
+        Attribute a  = 9;
+        Location l   = 10;
 
-        repeated string v_s  = 102;
-        repeated float v_f   = 103;
-        repeated double v_d  = 104;
-        repeated int32 v_i32 = 105;
-        repeated int64 v_i64 = 106;
-        repeated bool v_b    = 107;
+        repeated string v_s   = 102;
+        repeated float v_f    = 103;
+        repeated double v_d   = 104;
+        repeated int32 v_i32  = 105;
+        repeated int64 v_i64  = 106;
+        repeated bool v_b     = 107;
+        repeated Location v_l = 110;
 }
 
 message ConstructQueryConstraintObjectRequest
