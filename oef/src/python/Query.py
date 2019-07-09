@@ -565,7 +565,7 @@ class Set(ConstraintType, ABC):
 
     @property
     def _type(self) -> str:
-        return ProtoHelpers.typeToRange(ProtoHelpers.pythonTypeToString(next(iter(self.values))))
+        return ProtoHelpers.typeToSet(ProtoHelpers.pythonTypeToString(next(iter(self.values))))
 
     @property
     def _value(self):
@@ -738,6 +738,73 @@ class Constraint(ConstraintExpr):
     def _node(self):
         return self.node
 
+    def check(self, description: Description) -> bool:
+        """
+        Check if a description satisfies the constraint. The implementation depends on the type of the constraint.
+
+        :param description: the description to check.
+        :return: ``True`` if the description satisfies the constraint, ``False`` otherwise.
+
+        Examples:
+            >>> attr_author = AttributeSchema("author" , str, True, "The author of the book.")
+            >>> attr_year   = AttributeSchema("year",    int, True, "The year of publication of the book.")
+            >>> c1 = Constraint("author", Eq("Stephen King"))
+            >>> c2 = Constraint("year", Gt(1990))
+            >>> book_1 = Description({"author": "Stephen King",  "year": 1991})
+            >>> book_2 = Description({"author": "George Orwell", "year": 1948})
+
+            The ``"author"`` attribute instantiation satisfies the constraint, so the result is ``True``.
+
+            >>> c1.check(book_1)
+            True
+
+            Here, the ``"author"`` does not satisfy the constraints. Hence, the result is ``False``.
+
+            >>> c1.check(book_2)
+            False
+
+            In this case, there is a missing field specified by the query, that is ``"year"``
+            So the result is ``False``, even in the case it is not required by the schema:
+
+            >>> c2.check(Description({"author": "Stephen King"}))
+            False
+
+            If the type of some attribute of the description is not correct, the result is ``False``.
+            In this case, the field ``"year"`` has a string instead of an integer:
+
+            >>> c2.check(Description({"author": "Stephen King", "year": "1991"}))
+            False
+            >>> Constraint("position", Distance(Location(0.0, 0.0), 1.0)).check(Description({"position": "1.0,1.0"}))
+            False
+
+        """
+        # if the name of the attribute is not present, return false.
+        name = self.attribute_name
+        if name not in description.values:
+            return False
+
+        # if the type of the value is different from the type of the attribute schema, return false.
+        value = description.values[name]
+        if type(value) != self.constraint._get_type():
+            return False
+
+        # dispatch the check to the right implementation for the concrete constraint type.
+        return self.constraint.check(value)
+
+    def is_valid(self, data_model: DataModel) -> bool:
+        # if the attribute name of the constraint is not present in the data model, the constraint is not valid.
+        if self.attribute_name not in data_model.attributes_by_name:
+            return False
+
+        attribute = data_model.attributes_by_name[self.attribute_name]
+        return self.constraint.is_valid(attribute)
+
+    def __eq__(self, other):
+        if type(other) != Constraint:
+            return False
+        else:
+            return self.attribute_name == other.attribute_name and self.constraint == other.constraint
+
 
 class Query(ProtobufSerializable):
     """
@@ -829,3 +896,6 @@ class Query(ProtobufSerializable):
         if type(other) != Query:
             return False
         return self.constraints == other.constraints and self.model == other.model
+
+    def getGraph(self):
+        return self.root.graphVisualization()[0]

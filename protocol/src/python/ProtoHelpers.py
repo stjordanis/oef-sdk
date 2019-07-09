@@ -142,3 +142,7 @@ def decodeAttributeValueToType(av):
 
 def typeToRange(type_str: str):
     return type_str + "_range"
+
+
+def typeToSet(type_str: str):
+    return type_str + "_list"

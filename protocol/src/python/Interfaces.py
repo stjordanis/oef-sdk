@@ -6,12 +6,12 @@ class ProtobufSerializable(ABC):
     Interface that includes method for packing/unpacking to/from Protobuf objects.
     """
 
-    @abstractmethod
+    #@abstractmethod
     def to_pb(self):
         """Convert the object into a Protobuf object"""
 
     @classmethod
-    @abstractmethod
+    #@abstractmethod
     def from_pb(cls, obj):
         """
         Unpack a Protobuf object.

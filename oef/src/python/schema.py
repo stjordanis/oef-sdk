@@ -33,7 +33,7 @@ import copy
 from abc import ABC, abstractmethod
 from typing import Union, Type, Optional, List, Dict
 
-import oef.agent_pb2 as agent_pb2
+import protocol.src.proto.agent_pb2 as agent_pb2
 from protocol.src.proto import dap_interface_pb2
 from utils.src.python.Logging import has_logger
 from protocol.src.python.Interfaces import ProtobufSerializable

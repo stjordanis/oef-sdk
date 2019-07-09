@@ -2,6 +2,11 @@ from utils.src.python.Logging import has_logger
 from protocol.src.proto import dap_interface_pb2
 from protocol.src.python import TypeHelpers
 
+try:
+    from graphviz import Digraph
+except ImportError:
+    Digraph = None
+
 
 class Branch(object):
     def __init__(self,
@@ -111,6 +116,30 @@ class Branch(object):
 
         return pb
 
+    def graphVisualization(self, g=None, node_id=1):
+        if g is None:
+            if Digraph:
+                g = Digraph("Branch")
+            else:
+                return None
+        g.node(f"node_{node_id}", self.combiner)
+        children = []
+        id_counter = node_id
+        for n in self.subnodes:
+            id_counter += 1
+            children.append(id_counter)
+            _, id_counter = n.graphVisualization(g, id_counter)
+
+        for leaf in self.leaves:
+            id_counter += 1
+            leaf.graphVisualization(g, id_counter)
+            children.append(id_counter)
+
+        for child in children:
+            g.edge(f"node_{node_id}", f"node_{child}")
+
+        return g, id_counter
+
 
 class Leaf(object):
     @has_logger
@@ -182,3 +211,7 @@ class Leaf(object):
             self.query_field_type,
             str(len(self.mementos)) + " MEMS" if self.mementos else "NO_MEM",
         )
+
+    def graphVisualization(self, g=Digraph("Branch"), node_id=1):
+        g.node(f"node_{node_id}", f"{self.target_field_name} {self.operator} {self.query_field_value}")
+
