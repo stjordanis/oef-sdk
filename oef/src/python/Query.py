@@ -899,3 +899,16 @@ class Query(ProtobufSerializable):
 
     def getGraph(self):
         return self.root.graphVisualization()[0]
+
+
+class SearchResultItem:
+    def __init__(self, public_key: str,
+                 core_key : str,
+                 core_addr: str,
+                 core_port: int,
+                 distance: int):
+        self.public_key = public_key
+        self.core_key  = core_key
+        self.core_addr = core_addr
+        self.core_port = core_port
+        self.distance  = distance

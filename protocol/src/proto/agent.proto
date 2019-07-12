@@ -2,7 +2,7 @@ syntax = "proto2";
 
 package fetch.oef.pb;
 
-//import "query.proto";
+import "protocol/src/proto/data_model_instance.proto";
 import "protocol/src/proto/fipa.proto";
 
 message Agent {
@@ -96,7 +96,7 @@ message Server {
 }
 
 message AgentDescription {
-    //required Query.Instance description = 1;
+    required Instance description = 1;
 }
 
 message AgentSearch {
