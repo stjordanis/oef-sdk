@@ -49,8 +49,8 @@ from oef.src.python.agents import OEFAgent
 
 from typing import List
 from oef.src.python.proxy import PROPOSE_TYPES
-from oef.src.python.query import Eq, Constraint
-from oef.src.python.query import Query
+from oef.src.python.Query import Eq, Constraint
+from oef.src.python.Query import Query
 
 import asyncio
 
@@ -94,8 +94,6 @@ if __name__ == "__main__":
     agent = WeatherClient("weatherCLient", oef_addr="127.0.0.1", oef_port=10000)
     agent.connect()
 
-    time.sleep(2)
-
     # look for service agents registered as 'weather_station' that:
     # - provide measurements for temperature
     # - provide measurements for air pressure
@@ -104,10 +102,8 @@ if __name__ == "__main__":
                    Constraint(AIR_PRESSURE_ATTR.name, Eq(True)),
                    Constraint(HUMIDITY_ATTR.name, Eq(True))],
                   WEATHER_DATA_MODEL)
-
     agent.search_services(0, query)
 
-    time.sleep(1)
 
     try:
         agent.run()

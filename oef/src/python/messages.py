@@ -187,7 +187,7 @@ class SearchAgents(BaseMessage):
     def to_pb(self) -> agent_pb2.Envelope:
         envelope = agent_pb2.Envelope()
         envelope.msg_id = self.msg_id
-        envelope.search_agents.query.CopyFrom(self.query.to_pb())
+        envelope.search_agents.query_v2.CopyFrom(self.query.to_pb())
         return envelope
 
 
@@ -215,7 +215,7 @@ class SearchServices(BaseMessage):
     def to_pb(self) -> agent_pb2.Envelope:
         envelope = agent_pb2.Envelope()
         envelope.msg_id = self.msg_id
-        envelope.search_services.query.CopyFrom(self.query.to_pb())
+        envelope.search_services.query_v2.CopyFrom(self.query.to_pb())
         return envelope
 
 
@@ -244,7 +244,7 @@ class SearchServicesWide(BaseMessage):
     def to_pb(self) -> agent_pb2.Envelope:
         envelope = agent_pb2.Envelope()
         envelope.msg_id = self.msg_id
-        envelope.search_services_wide.query.CopyFrom(self.query.to_pb())
+        envelope.search_services_wide.query_v2.CopyFrom(self.query.to_pb())
         return envelope
 
 
@@ -406,6 +406,7 @@ class CFP(AgentMessage):
         if self.query is None:
             cfp.nothing.CopyFrom(fipa_pb2.Fipa.Cfp.Nothing())
         elif isinstance(self.query, Query):
+            #TODO this is probably busted, fix it.
             cfp.query.CopyFrom(self.query.to_pb())
         elif isinstance(self.query, bytes):
             cfp.content = self.query
@@ -467,7 +468,13 @@ class Propose(AgentMessage):
             propose.content = self.proposals
         else:
             proposals_pb = fipa_pb2.Fipa.Propose.Proposals()
-            proposals_pb.objects.extend([propose.to_pb() for propose in self.proposals])
+            for p in self.proposals:
+                serialized = p.to_pb().SerializeToString()
+                po = proposals_pb.objects.add()
+                po.ParseFromString(serialized)
+                print("**", p.to_pb())
+            #proposals_pb.objects.extend([propose.to_pb() for propose in self.proposals])
+            #print(self.proposals)
             propose.proposals.CopyFrom(proposals_pb)
         fipa_msg.propose.CopyFrom(propose)
         agent_msg = agent_pb2.Agent.Message()
@@ -480,6 +487,7 @@ class Propose(AgentMessage):
         envelope = agent_pb2.Envelope()
         envelope.msg_id = self.msg_id
         envelope.send_message.CopyFrom(agent_msg)
+        print("****", envelope)
         return envelope
 
 

@@ -34,6 +34,7 @@ from abc import ABC, abstractmethod
 from typing import Union, Type, Optional, List, Dict
 
 import protocol.src.proto.agent_pb2 as agent_pb2
+import protocol.src.proto.query_pb2 as query_pb2
 from protocol.src.proto import dap_interface_pb2, data_model_instance_pb2
 from utils.src.python.Logging import has_logger
 from protocol.src.python.Interfaces import ProtobufSerializable
@@ -323,14 +324,19 @@ class Description(ProtobufSerializable):
 
         return kv
 
-    def to_pb(self) -> data_model_instance_pb2.Instance:
+    def to_pb(self) -> query_pb2.Query.Instance:
         """
         Return the description object as a Protobuf query instance.
         :return: the Protobuf query instance object associated to the description.
         """
-        instance = data_model_instance_pb2.Instance()
-        instance.model.CopyFrom(self.data_model.to_pb())
-        instance.values.extend([self._to_key_value_pb(key, value) for key, value in self.values.items()])
+        instance = query_pb2.Query.Instance()
+        instance.model.ParseFromString(self.data_model.to_pb().SerializeToString())
+        #TODO make it nice
+        for key, value in self.values.items():
+            serialized = self._to_key_value_pb(key, value).SerializeToString()
+            new_kv = instance.values.add()
+            new_kv.ParseFromString(serialized)
+        #instance.values.extend([for key, value in self.values.items()])
         return instance
 
     def to_agent_description_pb(self) -> agent_pb2.AgentDescription:
@@ -339,7 +345,7 @@ class Description(ProtobufSerializable):
         :return: the associated AgentDescription Protobuf object.
         """
         description = agent_pb2.AgentDescription()
-        description.description.CopyFrom(self.to_pb())
+        description.description.ParseFromString(self.to_pb().SerializeToString())
         return description
 
     def _check_consistency(self):

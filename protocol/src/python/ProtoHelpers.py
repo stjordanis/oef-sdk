@@ -37,15 +37,15 @@ def rangeOf(x):
 
 
 def pythonTypeToString(value):
-    if isinstance(value, int):
+    if type(value) == int:
         return TYPE_INT64
-    elif isinstance(value, float):
+    elif type(value) == float:
         return TYPE_DOUBLE
-    elif isinstance(value, str):
+    elif type(value) == str:
         return TYPE_STRING
-    elif isinstance(value, bool):
+    elif type(value) == bool:
         return TYPE_BOOL
-    elif isinstance(value, Location):
+    elif type(value) == Location:
         return TYPE_LOCATION
     else:
         print("pythonTypeToString, type not supported: ", type(value), ". value=", value)

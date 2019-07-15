@@ -65,6 +65,7 @@ class WeatherStation(OEFAgent):
         price = 50
         proposal = Description({"price": price})
         print("[{}]: Sending propose at price: {}".format(self.public_key, price))
+        print("********", proposal.to_pb())
         self.send_propose(msg_id + 1, dialogue_id, origin, target + 1, [proposal])
 
     def on_accept(self, msg_id: int, dialogue_id: int, origin: str, target: int):

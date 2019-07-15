@@ -847,8 +847,15 @@ class Query(ProtobufSerializable):
         self.root = QueryBuildingBlocks.Branch(combiner=ProtoHelpers.COMBINER_ALL)
         for c in constraints:
             self.root.Add(c._node)
+        if self.model:
+            node = QueryBuildingBlocks.Leaf(
+                operator=ProtoHelpers.OPERATOR_CLOSE_TO,
+                query_field_value=self.model.to_pb(),
+                query_field_type="data_model",
+                target_field_name="")
+            self.root.Add(node)
 
-        self._check_validity()
+        #self._check_validity()
 
     def to_pb(self) -> dap_interface_pb2.ConstructQueryObjectRequest:
         """

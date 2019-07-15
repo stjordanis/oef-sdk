@@ -120,7 +120,7 @@ class Agent(AgentInterface, ABC):
             except asyncio.CancelledError:
                 pass
         else:
-            raise Exception("NO TASK TO CANCEL")
+            logger.info("Task was already canceled!")
 
     def connect(self) -> bool:
         """

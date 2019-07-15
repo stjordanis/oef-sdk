@@ -2,20 +2,22 @@ syntax = "proto2";
 
 package fetch.oef.pb;
 
+import "protocol/src/proto/data_model_instance.proto";
+import "protocol/src/proto/query.proto";
 
 message Fipa {
     message Cfp {
         message Nothing {
         }
         oneof payload {
-            //Query.Model query = 1;
+            Query.Model query = 1;
             bytes content = 2;
             Nothing nothing = 3;
         }
     }
     message Propose {
         message Proposals {
-            //repeated Query.Instance objects = 1;
+            repeated Instance objects = 1;
         }
         oneof payload {
             Proposals proposals = 1;
