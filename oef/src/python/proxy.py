@@ -31,7 +31,7 @@ import struct
 from collections import defaultdict
 from typing import Optional, Awaitable, Tuple, List, Dict
 
-import protocol.src.proto.agent_pb2 as agent_pb2
+from protocol.src.proto import agent_pb2
 from utils.src.python import uri
 from oef.src.python.core import OEFProxy
 from oef.src.python.messages import Message, CFP_TYPES, PROPOSE_TYPES, CFP, Propose, Accept, Decline, BaseMessage, \

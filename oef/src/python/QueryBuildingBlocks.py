@@ -212,6 +212,11 @@ class Leaf(object):
             str(len(self.mementos)) + " MEMS" if self.mementos else "NO_MEM",
         )
 
-    def graphVisualization(self, g=Digraph("Branch"), node_id=1):
+    def graphVisualization(self, g=None, node_id=1):
+        if g is None:
+            if Digraph is None:
+                return
+            else:
+                g = Digraph("Branch")
         g.node(f"node_{node_id}", f"{self.target_field_name} {self.operator} {self.query_field_value}")
 
