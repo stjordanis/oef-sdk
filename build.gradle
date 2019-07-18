@@ -6,6 +6,7 @@ plugins {
     id 'idea'
     id 'java-library'
     id 'maven-publish'
+    id 'org.jetbrains.dokka' version '0.9.18'
 }
 
 group 'com.github.fetchai'
@@ -15,6 +16,7 @@ version '0.1.1'
 repositories {
     mavenLocal()
     mavenCentral()
+    maven { url 'https://dl.bintray.com/kotlin/dokka' }
 }
 
 project.ext {
@@ -75,4 +77,14 @@ publishing {
     repositories {
         mavenLocal()
     }
+}
+
+javadoc {
+    source = sourceSets.main.allJava
+    classpath = configurations.compile
+}
+
+dokka {
+    outputFormat = 'html'
+    outputDirectory = "$buildDir/javadoc"
 }

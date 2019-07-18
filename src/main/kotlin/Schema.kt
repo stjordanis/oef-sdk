@@ -30,17 +30,25 @@ typealias AttributeType = QueryPb.Attribute.Type
 /**
  * Description of a single element of datum of either a description or a service.
  * This defines the schema that a single entry in a schema must take.
- * <pre>
- * {@code
- *      val attr_title    = AttributeSchema("title" ,          str,   True,  "The title of the book.")
- *      val attr_author   = AttributeSchema("author" ,         str,   True,  "The author of the book.")
- *      val attr_genre    = AttributeSchema("genre",           str,   True,  "The genre of the book.")
- *      val attr_year     = AttributeSchema("year",            int,   True,  "The year of publication of the book.")
- *      val attr_avg_rat  = AttributeSchema("average_rating",  float, False, "The average rating of the book.")
- *      val attr_isbn     = AttributeSchema("ISBN",            str,   True,  "The ISBN.")
- *      val attr_ebook    = AttributeSchema("ebook_available", bool,  False, "If the book can be sold as an e-book.")
- * }
- * </pre>
+ * ```
+ *      val attr_title    = AttributeSchema("title" ,          AttributeSchema.Type.STRING, True,  "The title of the book.")
+ *      val attr_author   = AttributeSchema("author" ,         AttributeSchema.Type.STRING, True,  "The author of the book.")
+ *      val attr_genre    = AttributeSchema("genre",           AttributeSchema.Type.STRING, True,  "The genre of the book.")
+ *      val attr_year     = AttributeSchema("year",            AttributeSchema.Type.STRING, True,  "The year of publication of the book.")
+ *      val attr_avg_rat  = AttributeSchema("average_rating",  AttributeSchema.Type.DOUBLE, False, "The average rating of the book.")
+ *      val attr_isbn     = AttributeSchema("ISBN",            AttributeSchema.Type.STRING, True,  "The ISBN.")
+ *      val attr_ebook    = AttributeSchema("ebook_available", AttributeSchema.Type.BOOL,   False, "If the book can be sold as an e-book.")
+ * ```
+ *
+ * @property name the name of this attribute
+ * @property type the type of this attribute
+ * @property required whether does this attribute have to be included
+ * @property description optional description of this attribute
+ *
+ * @param name the name of this attribute
+ * @param type the type of this attribute
+ * @param required whether does this attribute have to be included
+ * @param description optional description of this attribute
  */
 class AttributeSchema(
     name: String,
@@ -60,6 +68,9 @@ class AttributeSchema(
 
     constructor() : this("", Type.INT, true)
 
+    /**
+     * Constructs AttributeSchema object from protocol buffer message.
+     */
     override fun fromProto(obj: QueryPb.Attribute) {
         name        = obj.name
         type        = Type.fromAttributeType(obj.type)
@@ -70,6 +81,9 @@ class AttributeSchema(
         }
     }
 
+    /**
+     * Transforms AttributeSchema object to protocol buffer message.
+     */
     override fun toProto(): QueryPb.Attribute =  QueryPb.Attribute.newBuilder()
         .setName(name)
         .setType(type.type)
@@ -81,6 +95,9 @@ class AttributeSchema(
         }
         .build()
 
+    /**
+     * Checks the equality of two AttributeSchema objects.
+     */
     override fun equals(other: Any?): Boolean {
         if (other?.javaClass != javaClass) return false
         other as AttributeSchema
@@ -91,10 +108,16 @@ class AttributeSchema(
         return true
     }
 
+    /**
+     * Calculates the hash code for the object.
+     */
     override fun hashCode(): Int {
         return Objects.hash(name, type.type, required, description)
     }
 
+    /**
+     * Enum class represeting the supported attribute types.
+     */
     enum class Type (internal val type: AttributeType) {
         DOUBLE(AttributeType.DOUBLE),
         INT(AttributeType.INT),
@@ -120,24 +143,30 @@ class AttributeSchema(
  *  This class represents a data model (a.k.a. schema) of the OEFCore.
  *
  *  Examples:
- *  <pre>
- *  {@code
+ *  ```
  *      val book_model = DataModel("book", listOf
- *          AttributeSchema("title" ,          str,   True,  "The title of the book."),
- *          AttributeSchema("author" ,         str,   True,  "The author of the book."),
- *          AttributeSchema("genre",           str,   True,  "The genre of the book."),
- *          AttributeSchema("year",            int,   True,  "The year of publication of the book."),
- *          AttributeSchema("average_rating",  float, False, "The average rating of the book."),
- *          AttributeSchema("ISBN",            str,   True,  "The ISBN."),
- *          AttributeSchema("ebook_available", bool,  False, "If the book can be sold as an e-book."),
+ *          AttributeSchema("title" ,          AttributeSchema.Type.STRING, True,  "The title of the book."),
+ *          AttributeSchema("author" ,         AttributeSchema.Type.STRING, True,  "The author of the book."),
+ *          AttributeSchema("genre",           AttributeSchema.Type.STRING, True,  "The genre of the book."),
+ *          AttributeSchema("year",            AttributeSchema.Type.INT,    True,  "The year of publication of the book."),
+ *          AttributeSchema("average_rating",  AttributeSchema.Type.DOUBLE, False, "The average rating of the book."),
+ *          AttributeSchema("ISBN",            AttributeSchema.Type.INT,    True,  "The ISBN."),
+ *          AttributeSchema("ebook_available", AttributeSchema.Type.BOOL,   False, "If the book can be sold as an e-book."),
  *          ...), "A data model to describe books.")
- *}
- * </pre>
+ * ```
+ *
+ * @property name the name of the data model
+ * @property attributes the list of attributes that constitutes the data model
+ * @property description a short description for the data model
+ *
+ * @param name the name of the data model
+ * @param attributes the list of attributes that constitutes the data model
+ * @param description a short description for the data model
  */
 class DataModel(
     name: String,
     attributes: List<AttributeSchema>,
-    private var description: String? = null
+    description: String? = null
 ) : ProtobufSerializable<QueryPb.DataModel> {
 
     var attributes: List<AttributeSchema> = attributes
@@ -146,8 +175,14 @@ class DataModel(
     var name: String = name
         private set
 
+    var description: String? = description
+        private set
+
     constructor() : this("", listOf())
 
+    /**
+     * Constructs DataModel object from protocol buffer message.
+     */
     override fun fromProto(obj: QueryPb.DataModel) {
         name       = obj.name
         attributes = obj.attributesList.map {
@@ -161,6 +196,9 @@ class DataModel(
         }
     }
 
+    /**
+     * Transforms DataModel object to protocol buffer message.
+     */
     override fun toProto(): QueryPb.DataModel = QueryPb.DataModel.newBuilder()
         .setName(name)
         .also{ builder->
@@ -175,6 +213,9 @@ class DataModel(
         }
         .build()
 
+    /**
+     * Checks the equality of two DataModel objects.
+     */
     override fun equals(other: Any?): Boolean {
         if (other?.javaClass != javaClass) return false
         other as DataModel
@@ -187,17 +228,32 @@ class DataModel(
         return true
     }
 
+    /**
+     * Calculates the hash code for the object.
+     */
     override fun hashCode(): Int {
         return Objects.hash(name, attributes, description)
     }
 }
 
+/**
+ * Exception type thworn when we encounter an unexpected type!
+ */
 class UnknownTypeException(message: String) : Exception(message)
 
+/**
+ * Data structure to represent locations (i.e. a pair of latitude and longitude).
+ *
+ * @property lat the latitude of the location
+ * @property lon longitude of the location
+ */
 data class Location(
-    val lon: Double,
-    val lat: Double
-) {
+    val lat: Double,
+    val lon: Double
+    ) {
+    /**
+     * Transforms Location object to protocol buffer message.
+     */
     fun toProto(): QueryPb.Location = QueryPb.Location.newBuilder()
         .also {
             it.lat = lat
@@ -238,7 +294,7 @@ sealed class Value {
             is Value         -> value
             is QueryPb.Value -> fromProto(value)
             else -> {
-                throw Exception("Unsupported value type! Only long, int, double, bool and string is supported!")
+                throw UnknownTypeException("Unsupported value type! Only long, int, double, bool and string is supported!")
             }
         }
     }
@@ -336,25 +392,30 @@ class KeyValue (val name: String, val value: Value)  {
     }
 }
 
-
+/**
+ * Exception raised when the attribute value list and given data model is inconsistent in [Description].
+ */
 class AttributeInconsistencyException(
     message: String
 ) : Exception(message)
 
 
+/**
+ * Creates a [KeyValue] object which can be used in [Description] object creation.
+ */
 fun <T> descriptionPair(name: String, value: T): KeyValue = KeyValue(name,Value.fromKotlinType(value))
 
 
 /**
+
  * Description of either a service or an agent so it can be understood by the OEF and other agents.
  * Contains values of the description, and an optional schema for checking format of values.
  * Whenever the description is changed (including when it is create), the attribute values will
  * checked to make sure they do not violate the attribute schema.
  *
- * Examples:
+ * Example:
  *
- * <pre>
- * {@code
+ * ```
  *     val It = descriptionOf(
  *                  descriptionPair("title", "It"),
  *                  descriptionPair("author", "Stephen King"),
@@ -364,19 +425,26 @@ fun <T> descriptionPair(name: String, value: T): KeyValue = KeyValue(name,Value.
  *                  descriptionPair("ISBN", "0-670-81302-8"),
  *                  descriptionPair("ebook_available", true)
  *              )
- * }
- * </pre>
+ * ```
+ *
+ * @property attributeValues the values of each attribute in the description. This is a dictionary from attribute
+ * name to attribute value, each attribute value must have a type in [AttributeSchema.Type]
+ * @property dataModel optional schema of this description. If none is provided then the attribute values will not be
+ * checked against a schema. Schemas are extremely useful for preventing problems hard to debug, and are highly recommended.
+ * @property dataModelName the name of the default data model. If a data model is provided, this parameter is ignored.
  */
 class Description @JvmOverloads constructor(
     attributeValues: List<KeyValue>,
     dataModel: DataModel? = null,
-    private var dataModelName: String = dataModel?.name ?: ""
+    dataModelName: String = dataModel?.name ?: ""
 ) : ProtobufSerializable<QueryPb.Instance> {
 
     var attributeValues: List<KeyValue> = attributeValues
         private set
     var dataModel: DataModel?
         private set
+    var dataModelName: String = dataModelName
+        private  set
 
     init {
        this.dataModel = dataModel?.run {
@@ -412,6 +480,9 @@ class Description @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Constructs Description object from protocol buffer message.
+     */
     override fun fromProto(obj: QueryPb.Instance) {
         dataModel = DataModel().apply {
             fromProto(obj.model)
@@ -424,6 +495,9 @@ class Description @JvmOverloads constructor(
         attributeValues = list
     }
 
+    /**
+     * Transforms Description object to protocol buffer message.
+     */
     override fun toProto(): QueryPb.Instance = QueryPb.Instance.newBuilder()
         .also {
             it.model = dataModel?.toProto()
@@ -433,10 +507,16 @@ class Description @JvmOverloads constructor(
         }
         .build()
 
+    /**
+     * Transforms the object to AgentDescription protocol buffer message.
+     */
     fun toAgentDescription() = AgentOuterClass.AgentDescription.newBuilder()
         .setDescription(toProto())
         .build()
 
+    /**
+     * Checks the equality of two Description objects.
+     */
     override fun equals(other: Any?): Boolean {
         if (other?.javaClass != javaClass) return false
         other as Description
@@ -449,9 +529,15 @@ class Description @JvmOverloads constructor(
         return true
     }
 
+    /**
+     * Calculates the hash code for the object.
+     */
     override fun hashCode(): Int {
         return Objects.hash(attributeValues, dataModel)
     }
 }
 
+/**
+ * Creates [Description] object form the given [KeyValue] argument list.
+ */
 fun descriptionOf(vararg keyValues: KeyValue) = Description(keyValues.asList())

@@ -1,0 +1,192 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>AgentOuterClass.Agent.MessageOrBuilder - oef-sdk-kotlin</title>
+<link rel="stylesheet" href="../../../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../../../index.html">oef-sdk-kotlin</a>&nbsp;/&nbsp;<a href="../../../index.html">fetch.oef.pb</a>&nbsp;/&nbsp;<a href="../../index.html">AgentOuterClass</a>&nbsp;/&nbsp;<a href="../index.html">Agent</a>&nbsp;/&nbsp;<a href="./index.html">MessageOrBuilder</a><br/>
+<br/>
+<h1>MessageOrBuilder</h1>
+<code><span class="keyword">interface </span><span class="identifier">MessageOrBuilder</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">MessageOrBuilder</span></code>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="get-content.html">getContent</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getContent</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">ByteString</span><span class="symbol">!</span></code>
+<p><code>optional bytes content = 3;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="get-destination.html">getDestination</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getDestination</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">!</span></code>
+<p><code>required string destination = 2;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="get-destination-bytes.html">getDestinationBytes</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getDestinationBytes</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">ByteString</span><span class="symbol">!</span></code>
+<p><code>required string destination = 2;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="get-dialogue-id.html">getDialogueId</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getDialogueId</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p><code>required int32 dialogue_id = 1;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="get-fipa.html">getFipa</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getFipa</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../../-fipa-outer-class/-fipa/-message/index.html"><span class="identifier">FipaOuterClass.Fipa.Message</span></a><span class="symbol">!</span></code>
+<p><code>optional .fetch.oef.pb.Fipa.Message fipa = 4;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="get-fipa-or-builder.html">getFipaOrBuilder</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getFipaOrBuilder</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../../-fipa-outer-class/-fipa/-message-or-builder/index.html"><span class="identifier">FipaOuterClass.Fipa.MessageOrBuilder</span></a><span class="symbol">!</span></code>
+<p><code>optional .fetch.oef.pb.Fipa.Message fipa = 4;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="get-payload-case.html">getPayloadCase</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getPayloadCase</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-message/-payload-case/index.html"><span class="identifier">AgentOuterClass.Agent.Message.PayloadCase</span></a><span class="symbol">!</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="get-source-uri.html">getSourceUri</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getSourceUri</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">!</span></code>
+<p><code>optional string source_uri = 102;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="get-source-uri-bytes.html">getSourceUriBytes</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getSourceUriBytes</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">ByteString</span><span class="symbol">!</span></code>
+<p><code>optional string source_uri = 102;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="get-target-uri.html">getTargetUri</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getTargetUri</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">!</span></code>
+<p><code>optional string target_uri = 101;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="get-target-uri-bytes.html">getTargetUriBytes</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getTargetUriBytes</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">ByteString</span><span class="symbol">!</span></code>
+<p><code>optional string target_uri = 101;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="has-content.html">hasContent</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">hasContent</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p><code>optional bytes content = 3;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="has-destination.html">hasDestination</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">hasDestination</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p><code>required string destination = 2;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="has-dialogue-id.html">hasDialogueId</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">hasDialogueId</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p><code>required int32 dialogue_id = 1;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="has-fipa.html">hasFipa</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">hasFipa</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p><code>optional .fetch.oef.pb.Fipa.Message fipa = 4;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="has-source-uri.html">hasSourceUri</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">hasSourceUri</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p><code>optional string source_uri = 102;</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="has-target-uri.html">hasTargetUri</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">hasTargetUri</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p><code>optional string target_uri = 101;</code></p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Inheritors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="../-message/-builder/index.html">Builder</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">Builder</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Builder</span><span class="symbol">&lt;</span><a href="../-message/-builder/index.html"><span class="identifier">AgentOuterClass.Agent.Message.Builder</span></a><span class="symbol">!</span><span class="symbol">&gt;</span><span class="symbol">, </span><a href="./index.html"><span class="identifier">AgentOuterClass.Agent.MessageOrBuilder</span></a></code>
+<p>Protobuf type <code>fetch.oef.pb.Agent.Message</code></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="../-message/index.html">Message</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">Message</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">GeneratedMessageV3</span><span class="symbol">, </span><a href="./index.html"><span class="identifier">AgentOuterClass.Agent.MessageOrBuilder</span></a></code>
+<p>Protobuf type <code>fetch.oef.pb.Agent.Message</code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>
