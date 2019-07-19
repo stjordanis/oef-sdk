@@ -38,7 +38,7 @@ from oef.src.python.messages import Message, CFP_TYPES, PROPOSE_TYPES, CFP, Prop
     AgentMessage, RegisterDescription, RegisterService, UnregisterDescription, \
     UnregisterService, SearchAgents, SearchServices, SearchServicesWide, OEFErrorOperation, SearchResult, \
     OEFErrorMessage, DialogueErrorMessage
-from oef.src.python.Query import Query
+from oef.src.python.query import Query
 from oef.src.python.schema import Description
 
 logger = logging.getLogger(__name__)

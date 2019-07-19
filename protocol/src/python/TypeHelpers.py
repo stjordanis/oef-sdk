@@ -9,6 +9,9 @@ def _set_location(target, data):
     :param data: source data, format: data[0]=coordinate_system, data[1]=unit, data[2]=list of doubles
     :return:
     """
+    if type(target.l) == type(data):
+        target.l.CopyFrom(data)
+        return
     target.l.coordinate_system = data[0]
     target.l.unit = data[1]
     target.l.v.append(data[2][0])
@@ -16,7 +19,7 @@ def _set_location(target, data):
 
 
 def _get_location(src):
-    return src.l.coordinate_system, src.unit, src.l.v[:],
+    return src.l.coordinate_system, src.l.unit, src.l.v[:],
 
 
 def encodeConstraintValue(data, typecode, logger):

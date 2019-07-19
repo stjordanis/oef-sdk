@@ -34,7 +34,7 @@ import re
 from oef.src.python.core import OEFProxy, AgentInterface
 from oef.src.python.messages import OEFErrorOperation
 from oef.src.python.proxy import OEFNetworkProxy, PROPOSE_TYPES, CFP_TYPES, OEFConnectionError
-from oef.src.python.Query import Query, SearchResultItem
+from oef.src.python.query import Query, SearchResultItem
 from oef.src.python.schema import Description
 from utils.src.python import uri
 

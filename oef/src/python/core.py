@@ -31,7 +31,7 @@ from typing import List, Optional
 
 from protocol.src.proto import agent_pb2 as agent_pb2
 from oef.src.python.messages import CFP_TYPES, PROPOSE_TYPES, OEFErrorOperation
-from oef.src.python.Query import Query, SearchResultItem
+from oef.src.python.query import Query, SearchResultItem
 from oef.src.python.schema import Description
 from utils.src.python import uri
 

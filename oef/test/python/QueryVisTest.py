@@ -2,7 +2,7 @@ import unittest
 import sys
 from utils.src.python.Logging import has_logger
 
-from oef.src.python.Query import Query, Constraint, And, Or, Eq, NotEq, Lt, Gt, Range, In, NotIn, Not
+from oef.src.python.query import Query, Constraint, And, Or, Eq, NotEq, Lt, Gt, Range, In, NotIn, Not
 
 
 class QueryVisTest(unittest.TestCase):

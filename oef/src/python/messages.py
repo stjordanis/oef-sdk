@@ -30,7 +30,7 @@ from enum import Enum
 from typing import Union, List
 
 from protocol.src.proto import agent_pb2, fipa_pb2
-from oef.src.python.Query import Query
+from oef.src.python.query import Query
 from oef.src.python.schema import Description
 from utils.src.python import uri
 

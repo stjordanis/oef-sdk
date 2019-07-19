@@ -49,8 +49,8 @@ from oef.src.python.agents import OEFAgent
 
 from typing import List
 from oef.src.python.proxy import PROPOSE_TYPES
-from oef.src.python.Query import Eq, Constraint
-from oef.src.python.Query import Query
+from oef.src.python.query import Eq, Constraint
+from oef.src.python.query import Query
 
 import asyncio
 

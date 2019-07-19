@@ -713,7 +713,7 @@ class Constraint(ConstraintExpr):
             location, distance = constraint._value
             loc = QueryBuildingBlocks.Leaf(
                 operator=ProtoHelpers.OPERATOR_EQ,
-                query_field_value=location,
+                query_field_value=location.to_pb(),
                 query_field_type="location",
                 target_field_name=attribute_name + ".location",
             )
