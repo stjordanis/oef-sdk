@@ -397,6 +397,7 @@ class OEFProxy(OEFCoreInterface, ABC):
         self._loop = loop if loop is not None else asyncio.get_event_loop()
         self._active_loop = True
         self._context_store = {}
+        self._error_details = {}
 
     @property
     def public_key(self) -> str:
@@ -453,13 +454,13 @@ class OEFProxy(OEFCoreInterface, ABC):
                         agent_key = str(agt.key, 'ascii')
                         result_items.append(SearchResultItem(agent_key, core_key, core_addr, core_port, distance))
                 agent.on_search_result_wide(msg.answer_id, result_items)
-            elif case == "oef_error":
-                self._error_details.get[answer_id] = {
+            elif case == "oef_error": 
+                self._error_details[msg.answer_id] = {
                     'cause': msg.oef_error.cause,
                     'detail': msg.oef_error.detail
                 }
                 await agent.async_on_oef_error(msg.answer_id, OEFErrorOperation(msg.oef_error.operation))
-                self._error_details.pop(answer_id, {})
+                self._error_details.pop(msg.answer_id, {})
             elif case == "dialogue_error":
                 await agent.async_on_dialogue_error(msg.answer_id,
                                                     msg.dialogue_error.dialogue_id,

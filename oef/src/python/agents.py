@@ -79,6 +79,9 @@ class Agent(AgentInterface, ABC):
     def getContext(self, message_id: int, dialogue_id: int, origin: str):
         return self._oef_proxy.getContext(message_id, dialogue_id, origin)
 
+    def getErrorDetail(self, answer_id):
+        return self._oef_proxy.getErrorDetail(answer_id)
+
 
     def run(self) -> None:
         """
