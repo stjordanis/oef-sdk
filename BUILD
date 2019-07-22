@@ -31,7 +31,7 @@
 #    #pkg_path= "oef/src/python"
 #)
 
-load("//:pypi.bzl", "pypi_package")
+load("//:pypi.bzl", "pypi_package", "pypi_install")
 
 filegroup(
     name="python_sdk_readme",
@@ -50,7 +50,40 @@ pypi_package(
     title = 'oef',
     description = 'SDK for OEF Agent development.',
     url = 'https://github.com/fetchai/oef-sdk-python.git',
-    version = '0.5.1',
+    version = '0.5.2',
+    build = '0x000510',
+    author = 'Fetch.AI Limited',
+    author_email = 'community@fetch.ai',
+    license = 'Apache 2.0',
+    copyright = '2019 Fetch.AI Limited',
+    package='oef',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Developers',
+        'Natural Language :: English',
+        'License :: OSI Approved :: Apache Software License',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+    ],
+    install_requires=["protobuf", "colorlog", "graphviz"],
+    tests_require=["tox"],
+    python_requires='>=3.5',
+    long_description="//:python_sdk_readme"
+)
+
+pypi_install(
+    name="pypi_local",
+    deps=[
+        "//oef/src/python:py_oef",
+        "//protocol/src/proto:py_oef_protocol",
+        "//protocol/src/python:py_protocol_utils",
+        "//utils/src/python:py_utils"
+    ],
+    title = 'oef',
+    description = 'SDK for OEF Agent development.',
+    url = 'https://github.com/fetchai/oef-sdk-python.git',
+    version = '0.5.2',
     build = '0x000510',
     author = 'Fetch.AI Limited',
     author_email = 'community@fetch.ai',

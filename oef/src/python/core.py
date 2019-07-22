@@ -413,6 +413,9 @@ class OEFProxy(OEFCoreInterface, ABC):
     def getContext(self, message_id: int, dialogue_id: int, origin: str):
         return self._context_store.get("{}:{}:{}".format(message_id, dialogue_id, origin), uri.Context())
 
+    def getErrorDetail(self, answer_id):
+        return self._error_details.get(answer_id, {})
+
     @abstractmethod
     def is_connected(self) -> bool:
         """
@@ -451,7 +454,12 @@ class OEFProxy(OEFCoreInterface, ABC):
                         result_items.append(SearchResultItem(agent_key, core_key, core_addr, core_port, distance))
                 agent.on_search_result_wide(msg.answer_id, result_items)
             elif case == "oef_error":
+                self._error_details.get[answer_id] = {
+                    'cause': msg.oef_error.cause,
+                    'detail': msg.oef_error.detail
+                }
                 await agent.async_on_oef_error(msg.answer_id, OEFErrorOperation(msg.oef_error.operation))
+                self._error_details.pop(answer_id, {})
             elif case == "dialogue_error":
                 await agent.async_on_dialogue_error(msg.answer_id,
                                                     msg.dialogue_error.dialogue_id,

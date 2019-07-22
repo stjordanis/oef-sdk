@@ -45,7 +45,16 @@ class OEFErrorOperation(Enum):
     UNREGISTER_SERVICE = 1
     REGISTER_DESCRIPTION = 2
     UNREGISTER_DESCRIPTION = 3
+    SEARCH_SERVICES = 0x4;
+    SEARCH_SERVICES_WIDE = 0x5;
+    SEARCH_AGENTS = 0x6;
+    SEND_MESSAGE = 0x7;
 
+    OTHER = 0x99;
+
+    BAD_MESSAGE = 0x100;
+    BAD_OPERATION = 0x101;
+    KARMA_ = 0x200;
 
 class BaseMessage(ABC):
     """
