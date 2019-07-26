@@ -19,7 +19,7 @@ def _set_location(target, data):
 
 
 def _get_location(src):
-    return src.l.coordinate_system, src.l.unit, src.l.v[:],
+    return src.coordinate_system, src.unit, src.v[:],
 
 
 def encodeConstraintValue(data, typecode, logger):
@@ -124,7 +124,7 @@ def decodeConstraintValue(valueMessage):
         'int32_range':   lambda x: (x.v_i32[0], x.v_i32[1],),
         'int64_range':   lambda x: (x.v_i64[0], x.v_i64[1],),
 
-        'location':       lambda x: _get_location(x),
+        'location':       lambda x: _get_location(x.l),
         'location_range': lambda x: (_get_location(x.v_l[0]), _get_location(x.v_l[1])),
         'location_list':  lambda x: [_get_location(y) for y in x.v_l],
 
