@@ -18,7 +18,7 @@ message Agent {
             required string public_key = 1;
         }
         message Answer {
-            required string answer = 1;
+            optional string answer = 1;
             optional CapabilityBits capabilityBits = 2;
         }
     }

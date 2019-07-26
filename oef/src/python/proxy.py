@@ -285,11 +285,10 @@ class OEFSecureNetworkProxy(OEFNetworkProxy):
         event_loop = self._loop
         self._connection = await self._connect_to_server(event_loop)
         self._server_reader, self._server_writer = self._connection
-        # TODO: better way
         # we need to send Hi message to the server otherwise it will hang
-        pb_public_key = agent_pb2.Agent.Server.ID()
-        pb_public_key.public_key = self.public_key
-        self._send(pb_public_key)
+        pb_answer = agent_pb2.Agent.Server.Answer()
+        pb_answer.capabilityBits.can_handle_oob_errors = False
+        self._send(pb_answer)
         data = await self._receive()
         pb_status = agent_pb2.Server.Connected()
         pb_status.ParseFromString(data)
