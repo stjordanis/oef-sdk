@@ -247,23 +247,148 @@ class UnknownTypeException(message: String) : Exception(message)
  * @property lat the latitude of the location
  * @property lon longitude of the location
  */
-data class Location(
-    val lat: Double,
-    val lon: Double
+class Location(
+    vararg val coordinates: Double,
+    val coordinateSystem: String = "latlon",
+    val unit: String = "deg"
     ) {
     /**
      * Transforms Location object to protocol buffer message.
      */
-    fun toProto(): QueryPb.Location = QueryPb.Location.newBuilder()
+    fun toProto(): DapInterface.ValueMessage.Location = DapInterface.ValueMessage.Location.newBuilder()
         .also {
-            it.lat = lat
-            it.lon = lon
+            it.coordinateSystem = coordinateSystem
+            it.unit = unit
+            it.vList.addAll(coordinates.asSequence())
         }.build()
+}
 
-    companion object {
-        fun fromProto(pb: QueryPb.Location) = Location(pb.lon, pb.lat)
+
+internal fun <T> DapInterface.ValueMessage.Builder.fromKotlinType(value: T) = apply {
+    when(value){
+        is Int      -> {
+            i32 = value
+            typecode = ValueMessageType.INT32.code
+        }
+        is Long     -> {
+            i64 = value
+            typecode = ValueMessageType.INT64.code
+        }
+        is Double   -> {
+            d = value
+            typecode = ValueMessageType.DOUBLE.code
+        }
+        is Float    -> {
+            f = value
+            typecode = ValueMessageType.FLOAT.code
+        }
+        is Boolean  -> {
+            b = value
+            typecode = ValueMessageType.BOOL.code
+        }
+        is String   -> {
+            s = value
+            typecode = ValueMessageType.STRING.code
+        }
+        is Location -> {
+            l = value.toProto()
+            typecode = ValueMessageType.LOCATION.code
+        }
+        else -> {
+            throw UnknownTypeException("Unsupported value type! Only long, int, double, float, bool, string and Location is supported!")
+        }
     }
 }
+
+internal fun <T> DapInterface.ValueMessage.Builder.fromKotlinType(first: T, second: T) = apply {
+    when(first){
+        is Int      -> {
+            addVI32(first)
+            addVI32(second as Int)
+            typecode = ValueMessageType.INT32.toRangeTypeCode()
+        }
+        is Long     -> {
+            addVI64(first)
+            addVI64(second as Long)
+            typecode = ValueMessageType.INT64.toRangeTypeCode()
+        }
+        is Double   -> {
+            addVD(first)
+            addVD(second as Double)
+            typecode = ValueMessageType.DOUBLE.toRangeTypeCode()
+        }
+        is Float    -> {
+            addVF(first)
+            addVF(second as Float)
+            typecode = ValueMessageType.FLOAT.toRangeTypeCode()
+        }
+        is Boolean  -> {
+            addVB(first)
+            addVB(second as Boolean)
+            typecode = ValueMessageType.BOOL.toRangeTypeCode()
+        }
+        is String   -> {
+            addVS(first)
+            addVS(second as String)
+            typecode = ValueMessageType.STRING.toRangeTypeCode()
+        }
+        is Location -> {
+            addVL(first.toProto())
+            addVL((second as Location).toProto())
+            typecode = ValueMessageType.LOCATION.toRangeTypeCode()
+        }
+        else -> {
+            throw UnknownTypeException("Unsupported value type! Only long, int, double, float, bool, string and Location is supported!")
+        }
+    }
+}
+
+
+internal fun <T> DapInterface.ValueMessage.Builder.fromKotlinList(values: List<T>) = apply {
+    if (values.isEmpty()) return@apply
+    when(values[0]){
+        is Int      -> {
+            @Suppress("UNCHECKED_CAST")
+            addAllVI32(values as List<Int>)
+            typecode = ValueMessageType.INT32.toListTypeCode()
+        }
+        is Long     -> {
+            @Suppress("UNCHECKED_CAST")
+            addAllVI64(values as List<Long>)
+            typecode = ValueMessageType.INT64.toListTypeCode()
+        }
+        is Double   -> {
+            @Suppress("UNCHECKED_CAST")
+            addAllVD(values as List<Double>)
+            typecode = ValueMessageType.DOUBLE.toListTypeCode()
+        }
+        is Float    -> {
+            @Suppress("UNCHECKED_CAST")
+            addAllVF(values as List<Float>)
+            typecode = ValueMessageType.FLOAT.toListTypeCode()
+        }
+        is Boolean  -> {
+            @Suppress("UNCHECKED_CAST")
+            addAllVB(values as List<Boolean>)
+            typecode = ValueMessageType.BOOL.toListTypeCode()
+        }
+        is String   -> {
+            @Suppress("UNCHECKED_CAST")
+            addAllVS(values as List<String>)
+            typecode = ValueMessageType.STRING.toListTypeCode()
+        }
+        is Location -> {
+            @Suppress("UNCHECKED_CAST")
+            addAllVL((values as List<Location>).map { it.toProto()})
+            typecode = ValueMessageType.LOCATION.toListTypeCode()
+        }
+        else -> {
+            throw UnknownTypeException("Unsupported value type! Only long, int, double, float, bool, string and Location is supported!")
+        }
+    }
+}
+
+
 
 sealed class Value {
     data class INT   (val value: Long)    : Value()
@@ -278,7 +403,7 @@ sealed class Value {
             obj.hasD() -> DOUBLE(obj.d)
             obj.hasB() -> BOOL(obj.b)
             obj.hasS() -> STRING(obj.s)
-            obj.hasL() -> LOCATION(Location.fromProto(obj.l))
+            obj.hasL() -> LOCATION(Location(obj.l.lat, obj.l.lon))
             else -> {
                 throw UnknownTypeException("Unexpected Value type!")
             }
@@ -306,7 +431,7 @@ sealed class Value {
                 is DOUBLE -> it.d = value
                 is BOOL   -> it.b = value
                 is STRING -> it.s = value
-                is LOCATION -> it.l = value.toProto()
+                is LOCATION -> it.l = it.l.newBuilderForType().setLat(value.coordinates[0]).setLon(value.coordinates[1]).build()
             }
         }
         .build()
@@ -447,7 +572,7 @@ class Description @JvmOverloads constructor(
         private  set
 
     init {
-       this.dataModel = dataModel?.run {
+        this.dataModel = dataModel?.run {
             checkConsistency()
             this
         } ?: run{

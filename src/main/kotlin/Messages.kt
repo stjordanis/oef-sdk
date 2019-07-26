@@ -158,7 +158,7 @@ class SearchAgents(
     override fun toEnvelope(): Envelope = newEnvelopeBuilder(searchId)
         .setSearchAgents(
             AgentSearch.newBuilder()
-                .setQuery(query.toProto())
+                .setQueryV2(query.toProto())
         )
         .build()
 }
@@ -181,7 +181,7 @@ class SearchServices (
     override fun toEnvelope(): Envelope = newEnvelopeBuilder(searchId)
         .setSearchServices(
             AgentSearch.newBuilder()
-                .setQuery(query.toProto())
+                .setQueryV2(query.toProto())
         )
         .build()
 }
@@ -203,7 +203,7 @@ class SearchServicesWide(
     override fun toEnvelope(): Envelope = newEnvelopeBuilder(searchId)
         .setSearchServicesWide(
             AgentSearch.newBuilder()
-                .setQuery(query.toProto())
+                .setQueryV2(query.toProto())
         )
         .build()
 }
