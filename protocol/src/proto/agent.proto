@@ -8,12 +8,18 @@ import "protocol/src/proto/query.proto";
 import "protocol/src/proto/dap_interface.proto";
 
 message Agent {
+    message CapabilityBits
+    {
+        optional bool can_handle_oob_errors = 1;
+    }
+
     message Server {
         message ID {
             required string public_key = 1;
-        }       
+        }
         message Answer {
             required string answer = 1;
+            optional CapabilityBits capabilityBits = 2;
         }
     }
     message Message {
@@ -77,8 +83,17 @@ message Server {
                 UNREGISTER_SERVICE = 1;
                 REGISTER_DESCRIPTION = 2;
                 UNREGISTER_DESCRIPTION = 3;
+
+                SEARCH_SERVICES = 4;
+                SEARCH_SERVICES_WIDE = 5;
+                SEARCH_AGENTS = 6;
+                SEND_MESSAGE = 7;
+
+                OTHER = 10000;
             }
             required Operation operation = 1;
+            optional string cause = 2;
+            optional string detail = 3;
         }
         message DialogueError {
             required int32 dialogue_id = 1;
