@@ -1,0 +1,25 @@
+syntax = "proto2";
+
+package fetch.oef.pb;
+
+import "protocol/src/proto/dap_interface.proto";
+
+message Value {
+    oneof value {
+        string s = 1;
+        double d = 2;
+        bool b = 3;
+        int64 i = 4;
+        ValueMessage.Location l = 5;
+    }
+}
+
+message KeyValue {
+    required string key = 1;
+    required Value value = 2;
+}
+
+message Instance {
+    required ValueMessage.DataModel model = 1;
+    repeated KeyValue values = 2;
+}
