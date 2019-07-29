@@ -1,6 +1,7 @@
 .idea
 .gradle
 out
-build
+gradle-build
 **/.DS_Store
 .ijwb
+bazel-*

@@ -91,7 +91,7 @@ class WeatherStation (
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val agent = WeatherStation("weather_station", "127.0.0.1", 10002)
+    val agent = WeatherStation("weather_station", "127.0.0.1", 10000)
     agent.connect()
 
     agent.registerService(0, WeatherStation.weatherServiceDescription)

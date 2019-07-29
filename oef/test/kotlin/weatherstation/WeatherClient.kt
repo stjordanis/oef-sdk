@@ -89,7 +89,7 @@ class WeatherClient (
 }
 
 fun main(args: Array<String>)  = runBlocking<Unit> {
-    val agent = WeatherClient("weather_client", "127.0.0.1", 10002)
+    val agent = WeatherClient("weather_client", "127.0.0.1", 10000)
 
     if (!agent.connect()){
         return@runBlocking

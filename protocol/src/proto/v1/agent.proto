@@ -9,7 +9,7 @@ message Agent {
     message Server {
         message ID {
             required string public_key = 1;
-        }       
+        }
         message Answer {
             required string answer = 1;
         }
@@ -59,7 +59,7 @@ message Server {
         }
         repeated Item result = 1;
     }
-    
+
     message AgentMessage {
         message Content {
             required int32 dialogue_id = 1;
@@ -96,7 +96,7 @@ message Server {
 }
 
 message AgentDescription {
-    required Query.Instance description = 1; 
+    required Query.Instance description = 1;
 }
 
 message AgentSearch {
