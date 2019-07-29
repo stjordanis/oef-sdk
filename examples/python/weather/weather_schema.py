@@ -24,7 +24,7 @@
 This module defines the attributes and the data model used by the weather example.
 """
 
-from oef.src.python.schema import DataModel, AttributeSchema
+from oef.schema import DataModel, AttributeSchema
 
 WIND_SPEED_ATTR = AttributeSchema("wind_speed",
                                   bool,

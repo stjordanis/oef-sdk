@@ -38,10 +38,10 @@ The class ``WeatherStation`` defines the behaviour of the weather service agent.
 import json
 import pprint
 
-from oef.examples.python.weather.weather_schema import WEATHER_DATA_MODEL
-from oef.src.python.agents import OEFAgent
-from oef.src.python.messages import CFP_TYPES
-from oef.src.python.schema import Description
+from weather_schema import WEATHER_DATA_MODEL
+from oef.agents import OEFAgent
+from oef.messages import CFP_TYPES
+from oef.schema import Description
 
 
 class WeatherStation(OEFAgent):
@@ -90,4 +90,4 @@ if __name__ == "__main__":
         agent.run()
     finally:
         agent.stop()
-agent.disconnect()
+        agent.disconnect()

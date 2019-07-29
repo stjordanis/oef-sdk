@@ -44,17 +44,16 @@ It would be nice to extend this example to work with multiple weather stations, 
 import json
 import pprint
 
-from oef.examples.python.weather.weather_schema import WEATHER_DATA_MODEL, TEMPERATURE_ATTR, AIR_PRESSURE_ATTR, HUMIDITY_ATTR
-from oef.src.python.agents import OEFAgent
+from weather_schema import WEATHER_DATA_MODEL, TEMPERATURE_ATTR, AIR_PRESSURE_ATTR, HUMIDITY_ATTR
+from oef.agents import OEFAgent
 
 from typing import List
-from oef.src.python.proxy import PROPOSE_TYPES
-from oef.src.python.query import Eq, Constraint
-from oef.src.python.query import Query
-
-import asyncio
+from oef.proxy import PROPOSE_TYPES
+from oef.query import Eq, Constraint
+from oef.query import Query
 
 import time
+
 
 class WeatherClient(OEFAgent):
     """Class that implements the behavior of the weather client."""
@@ -104,7 +103,6 @@ if __name__ == "__main__":
                   WEATHER_DATA_MODEL)
     agent.search_services(0, query)
 
-
     try:
         agent.run()
         time.sleep(3)
@@ -112,4 +110,4 @@ if __name__ == "__main__":
         print("EXCEPTION:", ex)
     finally:
         agent.stop()
-agent.disconnect()
+        agent.disconnect()
