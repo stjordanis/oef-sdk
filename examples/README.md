@@ -21,8 +21,6 @@ There is two way one can run the python weather station.
     * To run the weather station use: `bazel run python/weather:server`
     * Running the weather client: `bazel run python/weather:client`
       
-      
-    
     
 ### Run Kotlin Weather station
 
