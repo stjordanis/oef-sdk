@@ -153,6 +153,7 @@ class OEFNetworkProxy(OEFProxy):
         pb_answer = agent_pb2.Agent.Server.Answer()
         pb_answer.answer = pb_phrase.phrase[::-1]
         pb_answer.capability_bits.will_heartbeat = True
+
         self._send(pb_answer)
         # Step 4: OEFCore --(Connected)--> Agent
         data = await self._receive()
