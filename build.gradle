@@ -10,7 +10,7 @@ plugins {
 }
 
 group 'com.github.fetchai'
-version '0.1.1'
+version '0.5.1'
 
 
 repositories {
@@ -42,6 +42,39 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.2'
     testCompile 'com.willowtreeapps.assertk:assertk-jvm:0.12'
 }
+
+
+sourceSets {
+    main {
+        java {
+            srcDir 'oef/src/java'
+        }
+        kotlin {
+            srcDir 'oef/src/kotlin'
+        }
+        resources {
+            srcDir 'oef/src/resources'
+        }
+        proto {
+            srcDir 'protocol/src/proto/v1'
+        }
+    }
+    test {
+        java {
+            srcDir 'oef/test/java'
+        }
+        kotlin {
+            srcDir 'oef/test/kotlin'
+        }
+        resources {
+            srcDir 'oef/test/resources'
+        }
+        proto {
+            srcDir 'protocol/test/proto'
+        }
+    }
+}
+
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"

@@ -8,7 +8,6 @@ py_binary(
     data = [
     ],
     deps = [
-        "//oef/src/python:py_oef",
     ]
 )
 
@@ -22,6 +21,5 @@ py_binary(
     data = [
     ],
     deps = [
-        "//oef/src/python:py_oef",
     ]
 )

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ai.fetch.oef.weatherstation
+package ai.fetch.oef.examples.weatherstation
 
 import ai.fetch.oef.*
 import kotlinx.coroutines.runBlocking
@@ -57,14 +57,12 @@ class WeatherStation (
     }
 
     override fun onCFP(answerId: Int, dialogueId: Int, origin: String, target: Int, query: CFPQuery) {
-        val context = getContext(answerId, dialogueId, origin)
-        log.info("Received CFP from $origin, for service: ${context.serviceId}")
+        log.info("Received CFP from $origin")
 
         val description = descriptionOf(descriptionPair("price", 50))
         val proposals   = proposalsFrom(description)
 
-        context.swap() // important, if we send to an agent via context, we need to call swap once before send
-        sendPropose(answerId+1, dialogueId, origin, target+1,  proposals, context)
+        sendPropose(answerId+1, dialogueId, origin, target+1,  proposals)
     }
 
     override fun onPropose(answerId: Int, dialogueId: Int, origin: String, target: Int, proposals: Proposals) {
@@ -72,13 +70,11 @@ class WeatherStation (
     }
 
     override fun onAccept(answerId: Int, dialogueId: Int, origin: String, target: Int) {
-        val context = getContext(answerId, dialogueId, origin)
-        log.info("Received accept from $origin for service ${context.serviceId}")
+        log.info("Received accept from $origin")
 
-        context.swap() // important, if we send to an agent via context, we need to call swap once before send
-        sendMessage(answerId+1, dialogueId, origin, messageCoder.encode("temperature: 15.0"), context)
-        sendMessage(answerId+1, dialogueId, origin, messageCoder.encode("humidity: 0.7"), context)
-        sendMessage(answerId+1, dialogueId, origin, messageCoder.encode("air_pressure: 1019.0"), context)
+        sendMessage(answerId+1, dialogueId, origin, messageCoder.encode("temperature: 15.0"))
+        sendMessage(answerId+1, dialogueId, origin, messageCoder.encode("humidity: 0.7"))
+        sendMessage(answerId+1, dialogueId, origin, messageCoder.encode("air_pressure: 1019.0"))
     }
 
     override fun onDecline(answerId: Int, dialogueId: Int, origin: String, target: Int) {
@@ -91,12 +87,13 @@ class WeatherStation (
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val agent = WeatherStation("weather_station", "127.0.0.1", 10002)
-    agent.connect()
+    val agent = WeatherStation("weather_station", "127.0.0.1", 10000)
+
+    if (!agent.connect()){
+        return@runBlocking
+    }
 
     agent.registerService(0, WeatherStation.weatherServiceDescription)
-    agent.registerService(1, WeatherStation.weatherServiceDescription, "second")
-
 
     Runtime.getRuntime().addShutdownHook(Thread {
         agent.stop()
