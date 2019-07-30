@@ -388,6 +388,9 @@ class AgentInterface(DialogueInterface, ConnectionInterface, ABC):
     * :class:`~oef.core.ConnectionInterface`, that contains handlers for error and search result messages from the OEF.
     """
 
+    @abstractmethod
+    def sendPong(self, answer_id: int) -> None:
+        pass
 
 class OEFProxy(OEFCoreInterface, ABC):
     """Abstract definition of an OEF Proxy."""
@@ -439,10 +442,15 @@ class OEFProxy(OEFCoreInterface, ABC):
             msg = agent_pb2.Server.AgentMessage()
             msg.ParseFromString(data)
             case = msg.WhichOneof("payload")
+            print(case)
             logger.debug("loop {0}".format(case))
 
             if case == "agents":
                 await agent.async_on_search_result(msg.answer_id, msg.agents.agents)
+            elif case == "ping":
+                # need to send a pong
+                print("PONG?")
+                agent.sendPong(msg.answer_id)
             elif case == "agents_wide":
                 result_items = []
                 for item in msg.agents_wide.result:

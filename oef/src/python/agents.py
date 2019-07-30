@@ -37,6 +37,7 @@ from oef.src.python.proxy import OEFNetworkProxy, PROPOSE_TYPES, CFP_TYPES, OEFC
 from oef.src.python.query import Query, SearchResultItem
 from oef.src.python.schema import Description
 from utils.src.python import uri
+from protocol.src.proto import agent_pb2 as agent_pb2
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,8 @@ class Agent(AgentInterface, ABC):
     def getErrorDetail(self, answer_id):
         return self._oef_proxy.getErrorDetail(answer_id)
 
+    def call_later(self, seconds: float, function, *params):
+        self._loop.call_later(seconds, function, *params)
 
     def run(self) -> None:
         """
@@ -89,6 +92,12 @@ class Agent(AgentInterface, ABC):
         :return: ``None``
         """
         self._loop.run_until_complete(self.async_run())
+
+    def sendPong(self, answer_id: int) -> None:
+        reply = agent_pb2.Envelope()
+        reply.msg_id = answer_id
+        reply.pong.dummy = 1
+        self._oef_proxy._send(reply)
 
     async def async_run(self) -> None:
         """
