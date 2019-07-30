@@ -66,7 +66,7 @@ pypi_package(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    install_requires=["protobuf", "colorlog", "graphviz"],
+    install_requires=["protobuf", "colorlog", "graphviz", "ssl"],
     tests_require=["tox"],
     python_requires='>=3.5',
     long_description="//:python_sdk_readme"
@@ -99,7 +99,7 @@ pypi_install(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    install_requires=["protobuf", "colorlog", "graphviz"],
+    install_requires=["protobuf", "colorlog", "graphviz", "ssl"],
     tests_require=["tox"],
     python_requires='>=3.5',
     long_description="//:python_sdk_readme"
