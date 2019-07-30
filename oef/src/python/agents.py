@@ -33,7 +33,7 @@ import re
 
 from oef.src.python.core import OEFProxy, AgentInterface
 from oef.src.python.messages import OEFErrorOperation
-from oef.src.python.proxy import OEFNetworkProxy, PROPOSE_TYPES, CFP_TYPES, OEFConnectionError
+from oef.src.python.proxy import OEFNetworkProxy, OEFSecureNetworkProxy, PROPOSE_TYPES, CFP_TYPES, OEFConnectionError
 from oef.src.python.query import Query, SearchResultItem
 from oef.src.python.schema import Description
 from utils.src.python import uri
@@ -151,6 +151,7 @@ class Agent(AgentInterface, ABC):
         if status:
             logger.debug("{}: Connection established.".format(self.public_key))
         else:
+            #TODO fix this
             raise OEFConnectionError("Public key already in use.")
         return status
 
@@ -305,3 +306,25 @@ class OEFAgent(Agent):
         :return: boolean
         """
         return re.search(r"^[a-km-zA-HJ-NP-Z1-9]+$", public_key)
+
+
+class OEFSecureAgent(Agent):
+    """
+    Agent that interacts with an OEFNode on the network through an SSL authenticated connection.
+    Secure implementation of :class:`~oef.agents.OEFAgent`.
+    """
+
+    def __init__(self, agent_key_file: str, oef_addr: str, core_key_file: str,
+                 oef_port: int = 3333, loop: Optional[asyncio.AbstractEventLoop] = None):
+        """
+        Initialize a secure OEF network agent.
+        :param agent_key_file: PEM file containing agent's private key and certificate.
+        :param oef_addr: the IP address of the OEF node.
+        :param port: port number for the connection.
+        :param core_key_file: PEM file containing OEF Node's public key.
+        :param loop: the event loop.
+        """
+        self._oef_addr = oef_addr
+        self._oef_port = oef_port
+        super().__init__(OEFSecureNetworkProxy(agent_key_file, str(self._oef_addr), core_key_file, self._oef_port, loop=loop))
+

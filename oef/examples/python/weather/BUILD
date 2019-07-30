@@ -25,3 +25,18 @@ py_binary(
         "//oef/src/python:py_oef",
     ]
 )
+
+py_binary(
+    name = "server_ssl",
+    main = "weather_station_secure.py",
+    srcs = [
+         "weather_station_secure.py",
+         "weather_schema.py"
+    ],
+    data = [
+        "//oef/examples/resources:keys",
+    ],
+    deps = [
+        "//oef/src/python:py_oef",
+    ]
+)

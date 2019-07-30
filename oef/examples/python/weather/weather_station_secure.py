@@ -39,12 +39,12 @@ import json
 import pprint
 
 from oef.examples.python.weather.weather_schema import WEATHER_DATA_MODEL
-from oef.src.python.agents import OEFAgent
+from oef.src.python.agents import OEFSecureAgent
 from oef.src.python.messages import CFP_TYPES
 from oef.src.python.schema import Description
 
 
-class WeatherStation(OEFAgent):
+class WeatherStation(OEFSecureAgent):
     """Class that implements the behaviour of the weather station."""
 
     weather_service_description = Description(
@@ -83,7 +83,8 @@ class WeatherStation(OEFAgent):
 
 
 if __name__ == "__main__":
-    agent = WeatherStation("weatherStation", oef_addr="127.0.0.1", oef_port=10002)
+    agent = WeatherStation(agent_key_file="oef/examples/resources/agent_1.pem",
+                           oef_addr="127.0.0.1", core_key_file="oef/examples/resources/core_pub.pem", oef_port=10005)
     agent.connect()
     agent.register_service(77, agent.weather_service_description)
 

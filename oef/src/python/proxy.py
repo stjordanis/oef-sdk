@@ -28,6 +28,7 @@ This module defines the proxies classes used by agents to interact with an OEF N
 import asyncio
 import logging
 import struct
+import ssl
 from collections import defaultdict
 from typing import Optional, Awaitable, Tuple, List, Dict
 
@@ -107,6 +108,7 @@ class OEFNetworkProxy(OEFProxy):
         """
         if not self.is_connected():
             raise OEFConnectionError("Connection not established yet. Please use 'connect()'.")
+        print("**** SENDING: ", protobuf_msg)
         serialized_msg = protobuf_msg.SerializeToString()
         nbytes = struct.pack("I", len(serialized_msg))
         self._server_writer.write(nbytes)
@@ -227,3 +229,69 @@ class OEFNetworkProxy(OEFProxy):
         self._server_writer = None
         self._server_reader = None
         self._connection = None
+
+
+class OEFSecureNetworkProxy(OEFNetworkProxy):
+    """
+    Authenticated Proxy to the functionality of the OEF.
+    """
+
+    def __init__(self, agent_key_file: str, oef_addr: str, core_key_file: str,
+                 port: int = DEFAULT_OEF_NODE_PORT, loop: asyncio.AbstractEventLoop = None) -> None:
+        """
+        Initialize the secure proxy to the OEF Node.
+        :param agent_key_file: PEM file containing agent's private key and certificate.
+        :param oef_addr: the IP address of the OEF node.
+        :param port: port number for the connection.
+        :param core_key_file: PEM file containing OEF Node's public key.
+        :param loop: the event loop.
+        """
+        # TODO get short format of RSA public key
+        super().__init__("doesn't really matter, for now", oef_addr, port, loop=loop)
+
+        self.oef_addr = oef_addr
+        self.port = port
+        # self._loop = loop if loop is not None else asyncio.get_event_loop()
+        self.agent_sk_file = agent_key_file
+        self.core_pk_file = core_key_file
+
+        # these are setup in _connect_to_server
+        self._connection = None
+        self._server_reader = None
+        self._server_writer = None
+        self._agent_pk = None
+        self._core_pk = None
+
+    async def _connect_to_server(self, event_loop) -> Tuple[asyncio.StreamReader, asyncio.StreamWriter]:
+        """
+        Connect to the OEF Node using SSL.
+        :param event_loop: the event loop to use for the connection.
+        :return: A stream reader and a stream writer for the connection.
+        """
+
+        # setup ssl
+        ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT);
+        ssl_ctx.options |= ssl.OP_NO_TLSv1
+        ssl_ctx.options |= ssl.OP_NO_TLSv1_1
+        ssl_ctx.load_cert_chain(self.agent_sk_file, keyfile=self.agent_sk_file)
+        ssl_ctx.check_hostname = False
+        ssl_ctx.verify_mode = ssl.VerifyMode.CERT_NONE
+        ssl_ctx.set_ciphers('DHE-RSA-AES256-SHA256')
+
+        return await asyncio.open_connection(self.oef_addr, int(self.port), ssl=ssl_ctx, loop=event_loop)
+
+    async def connect(self) -> bool:
+        if self.is_connected() and not self._server_writer.transport.is_closing():
+            return True
+
+        event_loop = self._loop
+        self._connection = await self._connect_to_server(event_loop)
+        self._server_reader, self._server_writer = self._connection
+        # we need to send Hi message to the server otherwise it will hang
+        pb_answer = agent_pb2.Agent.Server.Answer()
+        pb_answer.capabilityBits.can_handle_oob_errors = False
+        self._send(pb_answer)
+        data = await self._receive()
+        pb_status = agent_pb2.Server.Connected()
+        pb_status.ParseFromString(data)
+        return pb_status.status
