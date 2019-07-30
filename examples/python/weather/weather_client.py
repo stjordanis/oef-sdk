@@ -69,8 +69,9 @@ class WeatherClient(OEFAgent):
         for agent in agents:
             print("[{0}]: Sending to agent {1}".format(self.public_key, agent))
             # we send a 'None' query, meaning "give me all the resources you can propose."
-            query = None
-            self.send_cfp(1, 0, agent, 0, query)
+            data = {"key": [1, 2, 3]}
+            encoded_data = json.dumps(data).encode("UTF-8")
+            self.send_cfp(1, 0, agent, 0, encoded_data)
 
     def on_propose(self, msg_id: int, dialogue_id: int, origin: str, target: int, proposals: PROPOSE_TYPES):
         """When we receive a Propose message, answer with an Accept."""
