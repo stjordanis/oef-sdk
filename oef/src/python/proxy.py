@@ -108,7 +108,6 @@ class OEFNetworkProxy(OEFProxy):
         """
         if not self.is_connected():
             raise OEFConnectionError("Connection not established yet. Please use 'connect()'.")
-        print("**** SENDING: ", protobuf_msg)
         serialized_msg = protobuf_msg.SerializeToString()
         nbytes = struct.pack("I", len(serialized_msg))
         self._server_writer.write(nbytes)
