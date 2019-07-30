@@ -224,8 +224,11 @@ class OEFNetworkProxy(OEFProxy):
         """
         Tear down resources associated with this Proxy, i.e. the writing connection with the server.
         """
-        await self._server_writer.drain()
-        self._server_writer.close()
+        try:
+            await self._server_writer.drain()
+            self._server_writer.close()
+        except ConnectionResetError:
+            pass
         self._server_writer = None
         self._server_reader = None
         self._connection = None
@@ -270,7 +273,7 @@ class OEFSecureNetworkProxy(OEFNetworkProxy):
         """
 
         # setup ssl
-        ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT);
+        ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         ssl_ctx.options |= ssl.OP_NO_TLSv1
         ssl_ctx.options |= ssl.OP_NO_TLSv1_1
         ssl_ctx.load_cert_chain(self.agent_sk_file, keyfile=self.agent_sk_file)
@@ -289,7 +292,7 @@ class OEFSecureNetworkProxy(OEFNetworkProxy):
         self._server_reader, self._server_writer = self._connection
         # we need to send Hi message to the server otherwise it will hang
         pb_answer = agent_pb2.Agent.Server.Answer()
-        pb_answer.capabilityBits.can_handle_oob_errors = False
+        pb_answer.capability_bits.will_heartbeat = True
         self._send(pb_answer)
         data = await self._receive()
         pb_status = agent_pb2.Server.Connected()

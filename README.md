@@ -36,7 +36,7 @@ To use the python SDK we need to install it from pypi first using the following 
 	bazel run //:pypi_local
   ```
 
-### Kotlin/Java
+#### Kotlin/Java
   To build the SDK you have to use gradle. The following commands will build the SDK and install it into your local maven repository:
   ```
 	./gradlew clean
