@@ -26,6 +26,7 @@ The core module that contains the main abstraction of the SDK.
 """
 import asyncio
 import logging
+import struct
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
@@ -437,7 +438,10 @@ class OEFProxy(OEFCoreInterface, ABC):
             try:
                 data = await self._receive()
             except asyncio.CancelledError:
-                logger.debug("Proxy {}: loop cancelled".format(self.public_key))
+                logger.warning("Proxy {}: loop cancelled".format(self.public_key))
+                break
+            except struct.error:
+                logger.warning("Connection dropped")
                 break
             msg = agent_pb2.Server.AgentMessage()
             msg.ParseFromString(data)

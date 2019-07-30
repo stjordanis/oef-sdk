@@ -32,9 +32,8 @@ py_binary(
          "weather_schema.py"
     ],
     data = [
-        "//oef/examples/resources:keys",
+        "//resources:keys",
     ],
     deps = [
-        "//oef/src/python:py_oef",
     ]
 )

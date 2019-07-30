@@ -38,10 +38,10 @@ The class ``WeatherStation`` defines the behaviour of the weather service agent.
 import json
 import pprint
 
-from oef.examples.python.weather.weather_schema import WEATHER_DATA_MODEL
-from oef.src.python.agents import OEFSecureAgent
-from oef.src.python.messages import CFP_TYPES
-from oef.src.python.schema import Description
+from weather_schema import WEATHER_DATA_MODEL
+from oef.agents import OEFSecureAgent
+from oef.messages import CFP_TYPES
+from oef.schema import Description
 
 
 class WeatherStation(OEFSecureAgent):
@@ -83,8 +83,8 @@ class WeatherStation(OEFSecureAgent):
 
 
 if __name__ == "__main__":
-    agent = WeatherStation(agent_key_file="oef/examples/resources/agent_1.pem",
-                           oef_addr="127.0.0.1", core_key_file="oef/examples/resources/core_pub.pem", oef_port=10005)
+    agent = WeatherStation(agent_key_file="resources/agent_1.pem",
+                           oef_addr="127.0.0.1", core_key_file="resources/core_pub.pem", oef_port=10005)
     agent.connect()
     agent.register_service(77, agent.weather_service_description)
 

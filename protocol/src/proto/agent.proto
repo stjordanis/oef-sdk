@@ -8,7 +8,7 @@ import "protocol/src/proto/query.proto";
 import "protocol/src/proto/dap_interface.proto";
 
 message Agent {
-    message CapabilityBits
+    message capability_bits
     {
         optional bool will_heartbeat = 1;
     }
@@ -19,7 +19,7 @@ message Agent {
         }
         message Answer {
             optional string answer = 1;
-            optional CapabilityBits capabilityBits = 2;
+            optional capability_bits capability_bits = 2;
         }
     }
     message Message {
