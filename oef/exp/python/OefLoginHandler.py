@@ -6,7 +6,6 @@ import OefMessageHandler
 class OefLoginHandler(OefProtoBase.OefProtoBase):
     def __init__(self, target):
         self.target = target
-        print("OefLoginHandler.__init__")
         self.output(
             self.make_message(
                 agent_pb2.Agent.Server.ID,
