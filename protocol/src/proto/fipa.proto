@@ -3,16 +3,14 @@ syntax = "proto2";
 package fetch.oef.pb;
 
 import "protocol/src/proto/data_model_instance.proto";
-import "protocol/src/proto/query.proto";
 
 message Fipa {
     message Cfp {
         message Nothing {
         }
         oneof payload {
-            Query.Model query = 1;
-            bytes content = 2;
-            Nothing nothing = 3;
+            bytes content = 1;
+            Nothing nothing = 2;
         }
     }
     message Propose {
