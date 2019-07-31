@@ -83,7 +83,7 @@ class WeatherStation(OEFAgent):
 
 
 if __name__ == "__main__":
-    agent = WeatherStation("weatherStation", oef_addr="127.0.0.1", oef_port=10002)
+    agent = WeatherStation("weatherStation", oef_addr="127.0.0.1", oef_port=10000)
     agent.connect()
     agent.register_service(77, agent.weather_service_description)
 
