@@ -9,8 +9,8 @@ message Fipa {
         message Nothing {
         }
         oneof payload {
-            bytes content = 1;
-            Nothing nothing = 2;
+            bytes content = 2;
+            Nothing nothing = 3;
         }
     }
     message Propose {
