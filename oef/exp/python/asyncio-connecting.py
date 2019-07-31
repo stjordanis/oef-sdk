@@ -34,7 +34,6 @@ def main():
 
     conn.stop()
     core.stop()
-    print("done")
 
 if __name__ == "__main__":
     main()

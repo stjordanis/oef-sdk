@@ -104,9 +104,7 @@ class Connection(object):
     async def do_recv_loop(self):
         data = None
         try:
-            print(">>>")
             data = await self._receive()
-            print("<<<")
             if data == None:
                 #print("do_recv_loop got EOF")
                 return
