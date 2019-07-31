@@ -10,29 +10,30 @@ class AsyncioCore(object):
         self.done = None
         if loop:
             self.done = loop.create_future()
+        self.connections = set()
 
     def call_soon_async(self, func, *args):
         #print("call_soon_async: on ", threading.get_ident())
         def taskify(func, args):
             #print("call_soon_async.taskify: on ", threading.get_ident())
             asyncio.create_task(func(*args))
-        self.loop.call_soon_threadsafe(taskify,func, args)
+        return self.loop.call_soon_threadsafe(taskify,func, args)
 
     def call_soon(self, func, *args):
         if self.loop:
-            self.loop.call_soon_threadsafe(func, *args)
+            return self.loop.call_soon_threadsafe(func, *args)
         else:
             raise ValueError("Start my loop first!")
 
     def call_later(self, seconds, func, *args):
         if self.loop:
-            self.loop.call_later(seconds, func, *args)
+            return self.loop.call_later(seconds, func, *args)
         else:
             raise ValueError("Start my loop first!")
 
     def call_soon(self, func, *args):
         if self.loop:
-            self.loop.call_soon_threadsafe(func, *args)
+            return self.loop.call_soon_threadsafe(func, *args)
         else:
             raise ValueError("Start my loop first!")
 
@@ -40,11 +41,10 @@ class AsyncioCore(object):
         #print("run_threaded:new loop")
 
         def execute(core):
-            #print(">run_threaded::execute")
-            print("run_threaded.execute: on ", threading.get_ident())
+            #print(">run_threaded::execute", threading.get_ident())
             core.loop = asyncio.new_event_loop()
             core.loop.run_forever()
-            #print("<run_threaded::execute")
+            #print("<run_threaded::execute", threading.get_ident())
 
         #print("run_threaded:thr create")
         self.thread = threading.Thread(target=execute, args=(self,) )
@@ -56,11 +56,17 @@ class AsyncioCore(object):
         return asyncio.gather(self.done)
 
     def stop(self):
+        for conn in self.connections:
+            conn.stop()
+        for attempt in range(0,10):
+            if len(asyncio.all_tasks(self.loop)) == 0:
+                break
+            time.sleep(0.3)
         if self.done:
             self.done.set_result(True)
             self.done = None
         elif self.loop:
-            self.loop.stop()
+            self.loop.call_soon_threadsafe(self.loop.stop)
             self.thread.join()
             self.thread = None
             self.loop = None

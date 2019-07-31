@@ -25,14 +25,16 @@ def main():
         print("thing:", foo)
 
     c = 0
-    while c < 15:
+    while c < 5:
         time.sleep(1)
         if c == 0:
             conn.connect("127.0.0.1:10000", success=on_connect_ok, failure=on_connect_fail)
         #core.call_soon(thing, c)
         c += 1
 
+    conn.stop()
     core.stop()
+    print("done")
 
 if __name__ == "__main__":
     main()
