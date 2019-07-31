@@ -35,7 +35,7 @@ from oef.src.python.schema import Description
 from utils.src.python import uri
 
 NoneType = type(None)
-CFP_TYPES = Union[Query, bytes, NoneType]
+CFP_TYPES = Union[bytes, NoneType]
 PROPOSE_TYPES = Union[bytes, List[Description]]
 
 
@@ -52,6 +52,7 @@ class OEFErrorOperation(Enum):
 
     OTHER = 10000
     PONG = 10001
+
 
 class BaseMessage(ABC):
     """
@@ -411,9 +412,6 @@ class CFP(AgentMessage):
 
         if self.query is None:
             cfp.nothing.CopyFrom(fipa_pb2.Fipa.Cfp.Nothing())
-        elif isinstance(self.query, Query):
-            #TODO this is probably busted, fix it.
-            cfp.query.CopyFrom(self.query.to_pb())
         elif isinstance(self.query, bytes):
             cfp.content = self.query
         fipa_msg.cfp.CopyFrom(cfp)

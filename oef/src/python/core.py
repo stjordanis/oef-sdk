@@ -393,6 +393,7 @@ class AgentInterface(DialogueInterface, ConnectionInterface, ABC):
     def sendPong(self, answer_id: int) -> None:
         pass
 
+
 class OEFProxy(OEFCoreInterface, ABC):
     """Abstract definition of an OEF Proxy."""
 
@@ -493,8 +494,6 @@ class OEFProxy(OEFCoreInterface, ABC):
                                 query = None
                             elif cfp_case == "content":
                                 query = fipa.cfp.content
-                            elif cfp_case == "query":
-                                query = Query.from_pb(fipa.cfp.query)
                             else:
                                 raise Exception("Query type not valid.")
                             await agent.async_on_cfp(msg.answer_id, msg.content.dialogue_id, msg.content.origin,
