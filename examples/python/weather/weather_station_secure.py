@@ -84,7 +84,7 @@ class WeatherStation(OEFSecureAgent):
 
 if __name__ == "__main__":
     agent = WeatherStation(agent_key_file="resources/agent_1.pem",
-                           oef_addr="127.0.0.1", core_key_file="resources/core_pub.pem", oef_port=10005)
+                           oef_addr="127.0.0.1", core_key_file="resources/core_pub.pem", oef_port=15000)
     agent.connect()
     agent.register_service(77, agent.weather_service_description)
 
