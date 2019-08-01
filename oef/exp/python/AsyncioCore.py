@@ -56,8 +56,10 @@ class AsyncioCore(object):
         return asyncio.gather(self.done)
 
     def stop(self):
-        for conn in self.connections:
-            conn.stop()
+        conns = self.connections
+        self.connections = set()
+        for conn in conns:
+            conn.close()
         for attempt in range(0,10):
             if len(asyncio.all_tasks(self.loop)) == 0:
                 break

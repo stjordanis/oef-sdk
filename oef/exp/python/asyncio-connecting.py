@@ -9,10 +9,10 @@ import time
 import AsyncioCore
 import Connection
 
-def on_connect_ok(conn):
+def on_connect_ok(conn=None, url=None):
     print("URL OK:", url)
 
-def on_connect_fail(conn, url, ex):
+def on_connect_fail(conn=None, url=None, ex=None):
     print("URL FAIL:", url, ex)
 
 def main():
@@ -32,7 +32,9 @@ def main():
         #core.call_soon(thing, c)
         c += 1
 
-    conn.stop()
+    print("Scheduled shutdown.")
+
+    #conn.stop()
     core.stop()
 
 if __name__ == "__main__":

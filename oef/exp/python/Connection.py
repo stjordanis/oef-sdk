@@ -4,6 +4,15 @@ import queue
 
 import OefLoginHandler
 
+# This class is annoyingly complicated, but I'll explain.
+#
+# The "do_X" functions do the work asked for by the X
+# functions. Calling them must happen from INSIDE the core's event
+# loop. So a task to call them 'soon' is posted to the loop.
+#
+# Reading pulls LENGTH-prefixed protobufs off the comms reader and
+# sends them to the message-handler's 
+
 class Connection(object):
     def __init__(self, core):
         self.reader = None
@@ -36,8 +45,8 @@ class Connection(object):
     async def do_send(self, data):
         await self.outq.put(data)
 
-    def stop(self):
-        self.core.connections.remove(self)
+    def close(self):
+        self.core.connections.discard(self)
         self.core.call_soon_async(self.do_stop)
 
     async def do_stop(self):
@@ -60,8 +69,6 @@ class Connection(object):
             self.writer.close()
             self.writer= None
 
-        on_fail = data.get('failure', None)
-        on_succ = data.get('success', None)
         try:
             self.url = data['url']
             self.addr, _, self.port = self.url.partition(':')
@@ -72,19 +79,11 @@ class Connection(object):
             try:
                 self.send_loop = self.core.call_soon_async(self.do_send_loop)
                 self.recv_loop = self.core.call_soon_async(self.do_recv_loop)
-                self.message_handler = OefLoginHandler.OefLoginHandler(self)
+                self.message_handler = OefLoginHandler.OefLoginHandler(self, data)
             except Exception as ex:
                 print(ex)
         except Exception as ex:
-            h=False
-            if on_fail:
-                try:
-                    on_fail(self, self.url, ex)
-                    h=True
-                except:
-                    pass
-            if not h:
-                print("Connection.do_connect:failure - ", ex)
+            self.message_handler.handle_failure(ex)
 
     async def do_send_loop(self):
         sendable = await self.outq.get()
@@ -122,11 +121,6 @@ class Connection(object):
         await self.writer.drain()
 
     async def _receive(self):
-        """
-        Receive a Protobuf message.
-        :return: ``None``
-        :raises OEFConnectionError: if the connection has not been established yet.
-        """
         nbytes_packed = await self.reader.read(len(struct.pack("I", 0)))
         if len(nbytes_packed) == 0:
             raise EOFError()
@@ -138,5 +132,3 @@ class Connection(object):
                 raise EOFError()
             data += input_bytes
         return data
-
-    
