@@ -29,7 +29,7 @@ class OefLoginHandler(OefProtoBase.OefProtoBase):
                 self.make_message(
                     agent_pb2.Agent.Server.Answer,
                     {
-                        "answer": inp_chall['phrase'][::-1][3],
+                        "answer": inp_chall['phrase'][::-1],
                         "capability_bits": {
                             "will_heartbeat": True,
                         },
