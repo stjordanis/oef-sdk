@@ -2,6 +2,7 @@ from google.protobuf import json_format
 
 import json
 import struct
+from abc import ABC, abstractmethod
 
 class OefProtoBase(object):
     def __init__(self):
@@ -20,3 +21,15 @@ class OefProtoBase(object):
         json_string = json_format.MessageToJson(inbound, including_default_value_fields=True)
         contents = json.loads(json_string)
         return contents
+
+    @abstractmethod
+    def output(self, data, target):
+        pass
+
+    @abstractmethod
+    def incoming(self, data, connection_name, conn):
+        pass
+
+    @abstractmethod
+    def handle_failure(self, exception, conn):
+        pass

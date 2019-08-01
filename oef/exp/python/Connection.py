@@ -3,6 +3,7 @@ import struct
 import queue
 
 import OefLoginHandler
+import OefConnectionHandler
 
 # This class is annoyingly complicated, but I'll explain.
 #
@@ -14,18 +15,23 @@ import OefLoginHandler
 # sends them to the message-handler's 
 
 class Connection(object):
-    def __init__(self, core):
+    def __init__(self, core, name=None):
         self.reader = None
         self.writer = None
         self.core = core
         self.core.connections.add(self)
         self.url = None
+        self.outq = None
         self.message_handler = None
         self.send_loop = None
         self.recv_loop = None
+        self.name = name or id(self)
 
     def new_message_handler_type(self, message_handler_type):
-        self.message_handler = message_handler_type(self)
+        self.message_handler = message_handler_type()
+
+    def set_message_handler(self, message_handler):
+        self.message_handler = message_handler
 
     def connect(self, url, success=None, failure=None, **kwargs):
         if url == self.url:
@@ -36,6 +42,7 @@ class Connection(object):
             "url": url,
             "success": success,
             "failure": failure,
+            "conn": self,
         })
         self.core.call_soon_async(self.do_connect, data)
 
@@ -43,7 +50,8 @@ class Connection(object):
         self.core.call_soon_async(self.do_send, data)
 
     async def do_send(self, data):
-        await self.outq.put(data)
+        if self.outq != None:
+            await self.outq.put(data)
 
     def close(self):
         self.core.connections.discard(self)
@@ -56,7 +64,8 @@ class Connection(object):
         if w:
             w.close();
             await w.wait_closed()
-        await self.outq.put(None)
+        if self.outq != None:
+            await self.outq.put(None)
         if self.send_loop:
             self.send_loop.cancel()
         if self.recv_loop:
@@ -70,27 +79,34 @@ class Connection(object):
             self.writer= None
 
         try:
+            self.message_handler = OefConnectionHandler.OefConnectionHandler(data)
             self.url = data['url']
             self.addr, _, self.port = self.url.partition(':')
             self.port = int(self.port)
             x = await asyncio.open_connection(self.addr, self.port)
+            #print("do_connect got sock")
             self.outq = asyncio.Queue(maxsize=0)
+            self.message_handler = OefLoginHandler.OefLoginHandler(self, data)
             self.reader, self.writer = x
             try:
                 self.send_loop = self.core.call_soon_async(self.do_send_loop)
                 self.recv_loop = self.core.call_soon_async(self.do_recv_loop)
-                self.message_handler = OefLoginHandler.OefLoginHandler(self, data)
             except Exception as ex:
                 print(ex)
         except Exception as ex:
-            self.message_handler.handle_failure(ex)
+            self.message_handler.handle_failure(ex, self)
 
     async def do_send_loop(self):
+        #print(">do_send_loop")
         sendable = await self.outq.get()
-        if not self.writer or not sendable:
+        if sendable == None:
+            #print("do_send_loop found NULL message")
+            return
+        if not self.writer:
             #print("do_send_loop found null writer")
             return
         self.outq.task_done()
+        #print("do_send_loop sending data")
         await self._transmit(sendable)
         if not self.writer or not sendable:
             #print("do_send_loop found null writer")
@@ -98,9 +114,10 @@ class Connection(object):
         self.core.call_soon_async(self.do_send_loop)
 
     def _message_arrived(self, data):
-       self.message_handler.incoming(data)
+       self.message_handler.incoming(data, self.name, self)
 
     async def do_recv_loop(self):
+        #print(">do_recv_loop")
         data = None
         try:
             data = await self._receive()
