@@ -8,7 +8,7 @@ import time
 
 import AsyncioCore
 import Connection
-import OefMessageHandler
+import OefMultipleConnectionMessageHandler
 
 
 def logger(*args):
@@ -21,7 +21,7 @@ def on_connect_ok(conn=None, url=None, conn_name=None, **kwargs):
 def on_connect_fail(conn=None, url=None, ex=None, **kwargs):
     logger("on_connect_fail[{}] ".format(id(conn)), url, " => ", ex)
 
-gMessages = OefMessageHandler.OefMessageHandler(target=None, logger=logger)
+gMessages = OefMultipleConnectionMessageHandler.OefMultipleConnectionMessageHandler(target=None, logger=logger)
 
 def main():
     core = AsyncioCore.AsyncioCore(logger=logger)
