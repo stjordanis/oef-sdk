@@ -3,10 +3,18 @@ from protocol.src.proto import agent_pb2
 import OefProtoBase
 
 class OefConnectionHandler(OefProtoBase.OefProtoBase):
-    def __init__(self, data, **kwargs):
-        self.success = data.get('success', lambda x,y: None)
-        self.failure = data.get('failure', lambda x,y: None)
-        self.conn = data.get('conn', None)
+    def __init__(self, conn=None,
+                     success=None, failure=None,
+                     **kwargs):
+        self.success = success
+        self.failure = failure
+
+        if not self.failure:
+            self.failure = lambda x,y: None
+        if not self.success:
+            self.success = lambda x,y: None
+
+        self.conn = conn
 
     def output(self, data, target):
         target . send(data)

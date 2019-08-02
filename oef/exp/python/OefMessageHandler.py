@@ -3,16 +3,18 @@ from protocol.src.proto import agent_pb2
 import OefProtoBase
 
 class OefMessageHandler(OefProtoBase.OefProtoBase):
-    def __init__(self, **kwargs):
-        pass
+    def __init__(self, logger=None, **kwargs):
+        self.logger = logger or print
 
     def output(self, data, target):
         target . send(data)
 
     def incoming(self, data, connection_name=None, conn=None):
         am = self.decode_message(agent_pb2.Server.AgentMessage, data)
+        return self.incomingAgentMessage(am, connection_name=connection_name, conn=conn)
 
-        if 'ping' in am:
+    def incomingAgentMessage(self, agentMessage, connection_name=None, conn=None):
+        if 'ping' in agentMessage:
             self.output(
                 self.make_message(
                     agent_pb2.Envelope,
@@ -25,7 +27,7 @@ class OefMessageHandler(OefProtoBase.OefProtoBase):
                 ),
                 conn
             )
+            self.logger("OefMessageHandler[{}].incoming:handled:".format(id(self)), connection_name, agentMessage)
             return True
 
-        print(id(self), connection_name, am)
         return False

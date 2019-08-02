@@ -15,11 +15,12 @@ import OefConnectionHandler
 # sends them to the message-handler's 
 
 class Connection(object):
-    def __init__(self, core, name=None):
+    def __init__(self, core, name=None, logger=None):
         self.reader = None
         self.writer = None
         self.core = core
-        self.core.connections.add(self)
+        self.logger = logger or core.logger
+        self.core.register_connection(self)
         self.url = None
         self.outq = None
         self.message_handler = None
@@ -27,35 +28,29 @@ class Connection(object):
         self.recv_loop = None
         self.name = name or id(self)
 
-    def new_message_handler_type(self, message_handler_type):
-        self.message_handler = message_handler_type()
+    def new_message_handler_type(self, message_handler_type, **kwargs):
+        self.message_handler = message_handler_type(**kwargs)
 
     def set_message_handler(self, message_handler):
         self.message_handler = message_handler
 
-    def connect(self, url, success=None, failure=None, **kwargs):
-        if url == self.url:
+    def connect(self, **kwargs):
+        if self.url and self.url == kwargs.get('url', None):
             return
-        data = {}
-        data.update(kwargs)
-        data .update({
-            "url": url,
-            "success": success,
-            "failure": failure,
-            "conn": self,
-        })
-        self.core.call_soon_async(self.do_connect, data)
+        self.core.call_soon_async(self.do_connect, **kwargs)
 
     def send(self, data):
         self.core.call_soon_async(self.do_send, data)
 
+    def close(self):
+        self.core.deregister_connection(self)
+        self.core.call_soon_async(self.do_stop)
+
+# Internal workings.
+
     async def do_send(self, data):
         if self.outq != None:
             await self.outq.put(data)
-
-    def close(self):
-        self.core.connections.discard(self)
-        self.core.call_soon_async(self.do_stop)
 
     async def do_stop(self):
         self.reader = None
@@ -71,7 +66,10 @@ class Connection(object):
         if self.recv_loop:
             self.recv_loop.cancel()
 
-    async def do_connect(self, data):
+    async def do_with_kwargs(self, function, kwargs):
+        return await function(**kwargs)
+
+    async def do_connect(self, url=None, **kwargs):
         if self.reader:
             self.reader = None
         if self.writer:
@@ -79,37 +77,33 @@ class Connection(object):
             self.writer= None
 
         try:
-            self.message_handler = OefConnectionHandler.OefConnectionHandler(data)
-            self.url = data['url']
+            self.message_handler = OefConnectionHandler.OefConnectionHandler(
+                url=url,
+                **kwargs)
+            self.url = url
             self.addr, _, self.port = self.url.partition(':')
             self.port = int(self.port)
             x = await asyncio.open_connection(self.addr, self.port)
-            #print("do_connect got sock")
             self.outq = asyncio.Queue(maxsize=0)
-            self.message_handler = OefLoginHandler.OefLoginHandler(self, data)
+            self.message_handler = OefLoginHandler.OefLoginHandler(self, url=url, **kwargs)
             self.reader, self.writer = x
             try:
                 self.send_loop = self.core.call_soon_async(self.do_send_loop)
                 self.recv_loop = self.core.call_soon_async(self.do_recv_loop)
             except Exception as ex:
-                print(ex)
+                self.logger("Connection.do_connect[{}]: exception".format(id(self)), ex)
         except Exception as ex:
             self.message_handler.handle_failure(ex, self)
 
     async def do_send_loop(self):
-        #print(">do_send_loop")
         sendable = await self.outq.get()
         if sendable == None:
-            #print("do_send_loop found NULL message")
             return
         if not self.writer:
-            #print("do_send_loop found null writer")
             return
         self.outq.task_done()
-        #print("do_send_loop sending data")
         await self._transmit(sendable)
         if not self.writer or not sendable:
-            #print("do_send_loop found null writer")
             return
         self.core.call_soon_async(self.do_send_loop)
 
@@ -117,17 +111,14 @@ class Connection(object):
        self.message_handler.incoming(data, self.name, self)
 
     async def do_recv_loop(self):
-        #print(">do_recv_loop")
         data = None
         try:
             data = await self._receive()
             if data == None:
-                #print("do_recv_loop got EOF")
                 return
             self._message_arrived(data)
             self.core.call_soon_async(self.do_recv_loop)
         except EOFError:
-            #print("do_recv_loop got EOF")
             pass
 
     async def _transmit(self, body):

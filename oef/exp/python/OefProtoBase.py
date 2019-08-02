@@ -5,7 +5,7 @@ import struct
 from abc import ABC, abstractmethod
 
 class OefProtoBase(object):
-    def __init__(self):
+    def __init__(self, **kwargs):
         pass
 
     def make_message(self, x, contents):

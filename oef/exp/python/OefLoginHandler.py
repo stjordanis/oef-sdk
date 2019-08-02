@@ -4,11 +4,17 @@ import OefProtoBase
 import OefMessageHandler
 
 class OefLoginHandler(OefProtoBase.OefProtoBase):
-    def __init__(self, target, data):
-        #super()
-        self.success = data.get('success', lambda x,y: None)
-        self.failure = data.get('failure', lambda x,y: None)
-        self.public_key = data.get('public_key', None)
+    def __init__(self, conn=None, public_key=None, success=None, failure=None, logger=None, **kwargs):
+        super().__init__(**kwargs)
+        self.success = success
+        self.failure = failure
+        self.logger = logger
+
+        if not self.failure:
+            self.failure = lambda x,y: None
+        if not self.success:
+            self.success = lambda x,y: None
+        self.public_key = public_key or None
         self.output(
             self.make_message(
                 agent_pb2.Agent.Server.ID,
@@ -16,11 +22,11 @@ class OefLoginHandler(OefProtoBase.OefProtoBase):
                     "public_key": self.public_key,
                 }
             ),
-            data['conn']
+            conn
         )
 
-    def output(self, data, target):
-        target . send(data)
+    def output(self, data, conn):
+        conn . send(data)
 
     def incoming(self, data, connection_name, conn):
         inp_chall = self.decode_message(agent_pb2.Server.Phrase, data)
@@ -47,7 +53,7 @@ class OefLoginHandler(OefProtoBase.OefProtoBase):
 
         if 'status' in inp_conn:
             if inp_conn['status']:
-                conn.new_message_handler_type(OefMessageHandler.OefMessageHandler)
+                conn.new_message_handler_type(OefMessageHandler.OefMessageHandler, logger=self.logger)
                 self.success(conn=conn, url=conn.url, conn_name=conn.name)
                 return
             else:
